@@ -21,7 +21,7 @@ typedef struct cpu6502 {
     uint8_t cycles;
     uint32_t clock_count;
 
-    // struct Bus *bus;
+    struct Bus *bus;
     struct INSTRUCTION *lookup; // INSTRUCTION is defined below
                                       // this lookup table will be an array
                                       // it will point to the first element of the array
@@ -66,100 +66,6 @@ void CpuConnectBus(cpu6502 *cpu, struct Bus *n);
 uint8_t CpuGetFlag(cpu6502 *cpu, enum CPU_FLAGS f);
 void CpuSetFLag(cpu6502 *cpu, enum CPU_FLAGS f, bool v);
 
-uint8_t CpuRead(cpu6502 *cpu, uint16_t a);
-void CpuWrite(cpu6502 *cpu, uint16_t a, uint8_t d);
-uint8_t CpuFetch(cpu6502 *cpu);
-
-// I will be declaring these functions as non global
-// in the cpu.c file
-//
-// uint8_t CpuAdrIMP(cpu6502 *cpu);
-// uint8_t CpuAdrIMM(cpu6502 *cpu);
-// uint8_t CpuAdrZP0(cpu6502 *cpu);
-// uint8_t CpuAdrZPX(cpu6502 *cpu);
-// uint8_t CpuAdrZPY(cpu6502 *cpu);
-// uint8_t CpuAdrREL(cpu6502 *cpu);
-// uint8_t CpuAdrABS(cpu6502 *cpu);
-// uint8_t CpuAdrABX(cpu6502 *cpu);
-// uint8_t CpuAdrABY(cpu6502 *cpu);
-// uint8_t CpuAdrIND(cpu6502 *cpu);
-// uint8_t CpuAdrIZX(cpu6502 *cpu);
-// uint8_t CpuAdrIZY(cpu6502 *cpu);
-// 
-// uint8_t CpuInsADC(cpu6502 *cpu);
-// uint8_t CpuInsAND(cpu6502 *cpu);
-// uint8_t CpuInsASL(cpu6502 *cpu);
-// uint8_t CpuInsBCC(cpu6502 *cpu);
-// uint8_t CpuInsBCS(cpu6502 *cpu);
-// uint8_t CpuInsBEQ(cpu6502 *cpu);
-// uint8_t CpuInsBIT(cpu6502 *cpu);
-// uint8_t CpuInsBMI(cpu6502 *cpu);
-// uint8_t CpuInsBNE(cpu6502 *cpu);
-// uint8_t CpuInsBPL(cpu6502 *cpu);
-// uint8_t CpuInsBRK(cpu6502 *cpu);
-// uint8_t CpuInsBVC(cpu6502 *cpu);
-// uint8_t CpuInsBVS(cpu6502 *cpu);
-// uint8_t CpuInsCLC(cpu6502 *cpu);
-// uint8_t CpuInsCLD(cpu6502 *cpu);
-// uint8_t CpuInsCLI(cpu6502 *cpu);
-// uint8_t CpuInsCLV(cpu6502 *cpu);
-// uint8_t CpuInsCMP(cpu6502 *cpu);
-// uint8_t CpuInsCPX(cpu6502 *cpu);
-// uint8_t CpuInsCPY(cpu6502 *cpu);
-// uint8_t CpuInsDEC(cpu6502 *cpu);
-// uint8_t CpuInsDEX(cpu6502 *cpu);
-// uint8_t CpuInsDEY(cpu6502 *cpu);
-// uint8_t CpuInsEOR(cpu6502 *cpu);
-// uint8_t CpuInsINC(cpu6502 *cpu);
-// uint8_t CpuInsINX(cpu6502 *cpu);
-// uint8_t CpuInsINY(cpu6502 *cpu);
-// uint8_t CpuInsJMP(cpu6502 *cpu);
-// uint8_t CpuInsJSR(cpu6502 *cpu);
-// uint8_t CpuInsLDA(cpu6502 *cpu);
-// uint8_t CpuInsLDX(cpu6502 *cpu);
-// uint8_t CpuInsLDY(cpu6502 *cpu);
-// uint8_t CpuInsLSR(cpu6502 *cpu);
-// uint8_t CpuInsNOP(cpu6502 *cpu);
-// uint8_t CpuInsORA(cpu6502 *cpu);
-// uint8_t CpuInsPHA(cpu6502 *cpu);
-// uint8_t CpuInsPHP(cpu6502 *cpu);
-// uint8_t CpuInsPLA(cpu6502 *cpu);
-// uint8_t CpuInsPLP(cpu6502 *cpu);
-// uint8_t CpuInsROL(cpu6502 *cpu);
-// uint8_t CpuInsROR(cpu6502 *cpu);
-// uint8_t CpuInsRTI(cpu6502 *cpu);
-// uint8_t CpuInsRTS(cpu6502 *cpu);
-// uint8_t CpuInsSBC(cpu6502 *cpu);
-// uint8_t CpuInsSEC(cpu6502 *cpu);
-// uint8_t CpuInsSED(cpu6502 *cpu);
-// uint8_t CpuInsSEI(cpu6502 *cpu);
-// uint8_t CpuInsSTA(cpu6502 *cpu);
-// uint8_t CpuInsSTX(cpu6502 *cpu);
-// uint8_t CpuInsSTY(cpu6502 *cpu);
-// uint8_t CpuInsTAX(cpu6502 *cpu);
-// uint8_t CpuInsTAY(cpu6502 *cpu);
-// uint8_t CpuInsTSX(cpu6502 *cpu);
-// uint8_t CpuInsTXA(cpu6502 *cpu);
-// uint8_t CpuInsTXS(cpu6502 *cpu);
-// uint8_t CpuInsTYA(cpu6502 *cpu);
-// 
-// uint8_t CpuInsXXX(cpu6502 *cpu);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+uint8_t CpuReadFromBus(cpu6502 *cpu, uint16_t a);
+void CpuWriteFromBus(cpu6502 *cpu, uint16_t a, uint8_t d);
+uint8_t CpuFetchFromBus(cpu6502 *cpu);
