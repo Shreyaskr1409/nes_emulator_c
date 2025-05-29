@@ -1,13 +1,14 @@
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
 #include <stdbool.h>
+#include "../cpu/cpu.h"
 
-struct cpu6502;
+#define RAM_SIZE (64 * 1024)
 
 typedef struct Bus {
-    struct cpu6502 *cpu;
-    uint8_t ram[64 * 1024];
+    cpu6502 *cpu;
+    uint8_t ram[RAM_SIZE];
 } Bus;
 
 void BusInit(Bus *bus);
