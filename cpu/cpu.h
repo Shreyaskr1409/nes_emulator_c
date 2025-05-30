@@ -60,12 +60,12 @@ void CpuClock(cpu6502 *cpu);
 // this will send signal that execution has completed
 // this is needed so that we do not have to give clock manually
 bool CpuComplete(cpu6502 *cpu);
-void CpuConnectBus(cpu6502 *cpu, struct Bus *n);
+void CpuConnectBus(cpu6502 *cpu, struct Bus *bus);
 
 // used to access status register
 uint8_t CpuGetFlag(cpu6502 *cpu, enum CPU_FLAGS f);
 void CpuSetFLag(cpu6502 *cpu, enum CPU_FLAGS f, bool v);
 
-uint8_t CpuReadFromBus(cpu6502 *cpu, uint16_t a);
-void CpuWriteFromBus(cpu6502 *cpu, uint16_t a, uint8_t d);
+uint8_t CpuReadFromBus(cpu6502 *cpu, uint16_t addr);
+void CpuWriteFromBus(cpu6502 *cpu, uint16_t addr, uint8_t data);
 uint8_t CpuFetchFromBus(cpu6502 *cpu);

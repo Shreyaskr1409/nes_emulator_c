@@ -3,6 +3,7 @@
 #include "addressing_modes.h"
 #include "instructions.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 
 void CpuInit(cpu6502 *cpu) {
@@ -62,4 +63,111 @@ uint8_t CpuFetchFromBus(cpu6502 *cpu) {
         cpu->fetched = CpuReadFromBus(cpu, cpu->addr_abs);
     }
     return cpu->fetched;
+}
+
+
+
+
+void CpuReset(cpu6502 *cpu) {
+    cpu->addr_abs = 0xFFFC;
+    uint8_t lo = CpuReadFromBus(cpu, cpu->addr_abs + 0);
+    uint8_t hi = CpuReadFromBus(cpu, cpu->addr_abs + 1);
+
+    cpu->pc = (hi<<8) | lo;
+
+    cpu->a = 0;
+    cpu->x = 0;
+    cpu->y = 0;
+    cpu->stkp = 0xFD;
+    cpu->status = 0x00 | U;
+
+    cpu->addr_rel = 0x0000;
+    cpu->addr_abs = 0x0000;
+    cpu->fetched = 0x00;
+
+    cpu->cycles = 8;
+}
+void CpuIRQ(cpu6502 *cpu) {
+    // if interrupt flag is 0, then we can perform the interrupt request (IRQ)
+    if (CpuGetFlag(cpu, I) == 0) {
+        CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc>>8) & 0x00FF);
+        cpu->stkp--;
+        CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc) & 0x00FF);
+        cpu->stkp--;
+
+        CpuSetFLag(cpu, B, 0);
+        CpuSetFLag(cpu, U, 1);
+        CpuSetFLag(cpu, I, 1);
+        CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->status);
+        cpu->stkp--;
+
+        cpu->addr_abs = 0xFFFE;
+        // the low bit is saved before the high bit
+        uint16_t lo = CpuReadFromBus(cpu, cpu->addr_abs + 0);
+        uint16_t hi = CpuReadFromBus(cpu, cpu->addr_abs + 1);
+        cpu->pc = (hi<<8)|lo;
+
+        cpu->cycles = 7;
+    }
+}
+void CpuNMI(cpu6502 *cpu) {
+    // similar to IRQ but does not require I-flag to be 0 and pc is
+    // set to address from 0xFFFA
+    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc>>8) & 0x00FF);
+    cpu->stkp--;
+    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc) & 0x00FF);
+    cpu->stkp--;
+
+    CpuSetFLag(cpu, B, 0);
+    CpuSetFLag(cpu, U, 1);
+    CpuSetFLag(cpu, I, 1);
+    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->status);
+    cpu->stkp--;
+
+    cpu->addr_abs = 0xFFFA;
+    // the low bit is saved before the high bit
+    uint16_t lo = CpuReadFromBus(cpu, cpu->addr_abs + 0);
+    uint16_t hi = CpuReadFromBus(cpu, cpu->addr_abs + 1);
+    cpu->pc = (hi<<8)|lo;
+
+    cpu->cycles = 8;
+}
+void CpuClock(cpu6502 *cpu) {
+    if (cpu->cycles == 0) {
+        cpu->opcode = CpuReadFromBus(cpu, cpu->pc);
+        cpu->pc++;
+
+        cpu->cycles = cpu->lookup[cpu->opcode].cycles;
+        uint8_t additional_cycles1 = (cpu->lookup[cpu->opcode].addrmode)(cpu);
+        uint8_t additional_cycles2 = (cpu->lookup[cpu->opcode].operate)(cpu);
+        cpu->cycles += additional_cycles1 & additional_cycles2;
+        // additional_cycles could be only 1 or 0 in this use-case
+        // thus & operation is being done, else it is better to find out the
+        // maximum number of cycles required
+    }
+    cpu->cycles--;
+}
+
+
+
+uint8_t CpuGetFlag(cpu6502 *cpu, enum CPU_FLAGS f) {
+    if ((cpu->status&f) > 0) {
+        return 1;
+    }
+    return 0;
+}
+void CpuSetFLag(cpu6502 *cpu, enum CPU_FLAGS f, bool v) {
+    if (v) {
+        cpu->status |= f;
+    } else {
+        cpu->status &= ~f;
+    }
+}
+
+
+bool CpuComplete(cpu6502 *cpu) {
+    return cpu->cycles==0;
+}
+void CpuConnectBus(cpu6502 *cpu, struct Bus *bus) {
+    cpu->bus = bus;
 }
