@@ -95,9 +95,9 @@ void CpuIRQ(cpu6502 *cpu) {
         CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc) & 0x00FF);
         cpu->stkp--;
 
-        CpuSetFLag(cpu, B, 0);
-        CpuSetFLag(cpu, U, 1);
-        CpuSetFLag(cpu, I, 1);
+        CpuSetFlag(cpu, B, 0);
+        CpuSetFlag(cpu, U, 1);
+        CpuSetFlag(cpu, I, 1);
         CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->status);
         cpu->stkp--;
 
@@ -118,9 +118,9 @@ void CpuNMI(cpu6502 *cpu) {
     CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc) & 0x00FF);
     cpu->stkp--;
 
-    CpuSetFLag(cpu, B, 0);
-    CpuSetFLag(cpu, U, 1);
-    CpuSetFLag(cpu, I, 1);
+    CpuSetFlag(cpu, B, 0);
+    CpuSetFlag(cpu, U, 1);
+    CpuSetFlag(cpu, I, 1);
     CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->status);
     cpu->stkp--;
 
@@ -156,7 +156,7 @@ uint8_t CpuGetFlag(cpu6502 *cpu, enum CPU_FLAGS f) {
     }
     return 0;
 }
-void CpuSetFLag(cpu6502 *cpu, enum CPU_FLAGS f, bool v) {
+void CpuSetFlag(cpu6502 *cpu, enum CPU_FLAGS f, bool v) {
     if (v) {
         cpu->status |= f;
     } else {

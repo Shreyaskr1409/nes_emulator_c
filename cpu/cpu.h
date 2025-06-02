@@ -64,7 +64,7 @@ void CpuConnectBus(cpu6502 *cpu, struct Bus *bus);
 
 // used to access status register
 uint8_t CpuGetFlag(cpu6502 *cpu, enum CPU_FLAGS f);
-void CpuSetFLag(cpu6502 *cpu, enum CPU_FLAGS f, bool v);
+void CpuSetFlag(cpu6502 *cpu, enum CPU_FLAGS f, bool v);
 
 uint8_t CpuReadFromBus(cpu6502 *cpu, uint16_t addr);
 void CpuWriteFromBus(cpu6502 *cpu, uint16_t addr, uint8_t data);
