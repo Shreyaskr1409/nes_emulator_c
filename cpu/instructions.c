@@ -1,4 +1,5 @@
 #include "instructions.h"
+#include "addressing_modes.h"
 #include "cpu.h"
 #include <stdint.h>
 
@@ -39,6 +40,21 @@ uint8_t AND(cpu6502 *cpu) {
     CpuSetFlag(cpu, Z, cpu->a==0x00);
     CpuSetFlag(cpu, N, cpu->a&0x80);
     return 1;
+}
+
+uint8_t ASL(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->temp = cpu->fetched>>1;
+    CpuSetFlag(cpu, C, (cpu->temp & 0xFF00) > 0);
+    CpuSetFlag(cpu, N, cpu->temp == 0x80);
+    CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0x00);
+
+    if (cpu->lookup[cpu->opcode].addrmode == IMP) {
+        cpu->a = cpu->temp & 0x00FF;
+    } else {
+        CpuWriteFromBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
+    }
+    return 0;
 }
 
 // BRANCH IF CARRY CLEAR
@@ -89,6 +105,15 @@ uint8_t BEQ(cpu6502 *cpu) {
     return 0;
 }
 
+uint8_t BIT(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->temp = cpu->a & cpu->fetched;
+    CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0x0000);
+    CpuSetFlag(cpu, V, cpu->temp & (1<<6));
+    CpuSetFlag(cpu, N, cpu->temp & (1<<7));
+    return 0;
+}
+
 uint8_t BMI(cpu6502 *cpu) {
     if (CpuGetFlag(cpu, N) == 1) {
         cpu->cycles++;
@@ -128,6 +153,25 @@ uint8_t BPL(cpu6502 *cpu) {
 
         cpu->pc = cpu->addr_abs;
     }
+    return 0;
+}
+
+uint8_t BRK(cpu6502 *cpu) {
+    // Set interrupt as ON before doing anything
+    CpuSetFlag(cpu, I, true);
+    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc >> 8) & 0x00FF);
+    cpu->stkp--;
+    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->pc & 0x00FF);
+    cpu->stkp--;
+
+    // Storing flags to the stkp so that whenever someone jumps
+    // to the location in the memory, it knows the flags which were
+    // present at the time when BRK was executed
+    CpuSetFlag(cpu, B, true);
+    CpuWriteFromBus(cpu, cpu->stkp, cpu->status);
+    cpu->stkp--;
+    CpuSetFlag(cpu, B, false);
+
     return 0;
 }
 
@@ -174,6 +218,33 @@ uint8_t CLI(cpu6502 *cpu) {
 uint8_t CLV(cpu6502 *cpu) {
     CpuSetFlag(cpu, I, false);
     return 0;
+}
+
+uint8_t CMP(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->temp = cpu->a - cpu->fetched;
+    CpuSetFlag(cpu, C, cpu->a >= cpu->fetched);
+    CpuSetFlag(cpu, Z, cpu->a == cpu->fetched);
+    CpuSetFlag(cpu, N, cpu->temp & (1<<7));
+    return 1;
+}
+
+uint8_t CMX(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->temp = cpu->x - cpu->fetched;
+    CpuSetFlag(cpu, C, cpu->x >= cpu->fetched);
+    CpuSetFlag(cpu, Z, cpu->x == cpu->fetched);
+    CpuSetFlag(cpu, N, cpu->temp & (1<<7));
+    return 1;
+}
+
+uint8_t CMY(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->temp = cpu->y - cpu->fetched;
+    CpuSetFlag(cpu, C, cpu->y >= cpu->fetched);
+    CpuSetFlag(cpu, Z, cpu->y == cpu->fetched);
+    CpuSetFlag(cpu, N, cpu->temp & (1<<7));
+    return 1;
 }
 
 // Put into stack from accumulator
