@@ -330,3 +330,46 @@ uint8_t STY(cpu6502 *cpu) {
     CpuWriteFromBus(cpu, cpu->addr_abs, cpu->y);
     return 0;
 }
+
+uint8_t TAX(cpu6502 *cpu) {
+    cpu->x = cpu->a;
+    CpuSetFlag(cpu, Z, cpu->x == 0x00);
+    CpuSetFlag(cpu, N, cpu->x & (1<<7));
+    return 0;
+}
+
+uint8_t TAY(cpu6502 *cpu) {
+    cpu->y = cpu->a;
+    CpuSetFlag(cpu, Z, cpu->y == 0x00);
+    CpuSetFlag(cpu, N, cpu->y & (1<<7));
+    return 0;
+}
+
+uint8_t TSX(cpu6502 *cpu) {
+    cpu->x = cpu->stkp;
+    CpuSetFlag(cpu, Z, cpu->x == 0x00);
+    CpuSetFlag(cpu, N, cpu->x & (1<<7));
+    return 0;
+}
+
+uint8_t TXA(cpu6502 *cpu) {
+    cpu->a = cpu->x;
+    CpuSetFlag(cpu, Z, cpu->a == 0x00);
+    CpuSetFlag(cpu, N, cpu->a & (1<<7));
+    return 0;
+}
+
+uint8_t TSY(cpu6502 *cpu) {
+    cpu->y = cpu->stkp;
+    CpuSetFlag(cpu, Z, cpu->y == 0x00);
+    CpuSetFlag(cpu, N, cpu->y & (1<<7));
+    return 0;
+}
+
+uint8_t TYA(cpu6502 *cpu) {
+    cpu->a = cpu->y;
+    CpuSetFlag(cpu, Z, cpu->a == 0x00);
+    CpuSetFlag(cpu, N, cpu->a & (1<<7));
+    return 0;
+}
+

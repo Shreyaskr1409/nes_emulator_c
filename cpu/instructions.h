@@ -53,11 +53,11 @@ uint8_t SEI(cpu6502 *cpu); //
 uint8_t STA(cpu6502 *cpu); //
 uint8_t STX(cpu6502 *cpu); //
 uint8_t STY(cpu6502 *cpu); //
-uint8_t TAX(cpu6502 *cpu);
-uint8_t TAY(cpu6502 *cpu);
-uint8_t TSX(cpu6502 *cpu);
-uint8_t TXA(cpu6502 *cpu);
-uint8_t TXS(cpu6502 *cpu);
-uint8_t TYA(cpu6502 *cpu);
+uint8_t TAX(cpu6502 *cpu); //
+uint8_t TAY(cpu6502 *cpu); //
+uint8_t TSX(cpu6502 *cpu); //
+uint8_t TXA(cpu6502 *cpu); //
+uint8_t TXS(cpu6502 *cpu); //
+uint8_t TYA(cpu6502 *cpu); //
 
 uint8_t XXX(cpu6502 *cpu);
