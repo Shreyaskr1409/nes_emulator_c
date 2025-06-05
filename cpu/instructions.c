@@ -247,6 +247,29 @@ uint8_t CMY(cpu6502 *cpu) {
     return 1;
 }
 
+uint8_t DEC(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->temp = cpu->fetched - 1;
+    CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0);
+    CpuSetFlag(cpu, N, cpu->temp & (1<<7));
+    CpuWriteFromBus(cpu, cpu->addr_abs, cpu->temp);
+    return 0;
+}
+
+uint8_t DEX(cpu6502 *cpu) {
+    cpu->x--;
+    CpuSetFlag(cpu, Z, cpu->x==0);
+    CpuSetFlag(cpu, N, cpu->x & (1<<7));
+    return 0;
+}
+
+uint8_t DEY(cpu6502 *cpu) {
+    cpu->y--;
+    CpuSetFlag(cpu, Z, cpu->y==0);
+    CpuSetFlag(cpu, N, cpu->y & (1<<7));
+    return 0;
+}
+
 // Put into stack from accumulator
 uint8_t PHA(cpu6502 *cpu) {
     // Stackpointer is always an offset to the memory location of 0x0100
@@ -277,4 +300,33 @@ uint8_t SBC(cpu6502 *cpu) {
                 & ((uint16_t)cpu->a ^ (uint16_t)cpu->temp)) & 0x0080);
     cpu->a = cpu->temp & 0x00FF;
     return 1;
+}
+
+
+uint8_t SEC(cpu6502 *cpu) {
+    CpuSetFlag(cpu, C, true);
+    return 0;
+}
+uint8_t SED(cpu6502 *cpu) {
+    CpuSetFlag(cpu, D, true);
+    return 0;
+}
+uint8_t SEI(cpu6502 *cpu) {
+    CpuSetFlag(cpu, I, true);
+    return 0;
+}
+
+uint8_t STA(cpu6502 *cpu) {
+    CpuWriteFromBus(cpu, cpu->addr_abs, cpu->a);
+    return 0;
+}
+
+uint8_t STX(cpu6502 *cpu) {
+    CpuWriteFromBus(cpu, cpu->addr_abs, cpu->x);
+    return 0;
+}
+
+uint8_t STY(cpu6502 *cpu) {
+    CpuWriteFromBus(cpu, cpu->addr_abs, cpu->y);
+    return 0;
 }
