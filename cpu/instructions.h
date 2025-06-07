@@ -35,17 +35,17 @@ uint8_t JSR(cpu6502 *cpu); //
 uint8_t LDA(cpu6502 *cpu); //
 uint8_t LDX(cpu6502 *cpu); //
 uint8_t LDY(cpu6502 *cpu); //
-uint8_t LSR(cpu6502 *cpu);
-uint8_t NOP(cpu6502 *cpu);
-uint8_t ORA(cpu6502 *cpu);
-uint8_t PHA(cpu6502 *cpu);
+uint8_t LSR(cpu6502 *cpu); //
+uint8_t NOP(cpu6502 *cpu); //
+uint8_t ORA(cpu6502 *cpu); //
+uint8_t PHA(cpu6502 *cpu); //
 uint8_t PHP(cpu6502 *cpu); //
 uint8_t PLA(cpu6502 *cpu); //
-uint8_t PLP(cpu6502 *cpu);
-uint8_t ROL(cpu6502 *cpu);
-uint8_t ROR(cpu6502 *cpu);
-uint8_t RTI(cpu6502 *cpu);
-uint8_t RTS(cpu6502 *cpu);
+uint8_t PLP(cpu6502 *cpu); //
+uint8_t ROL(cpu6502 *cpu); //
+uint8_t ROR(cpu6502 *cpu); //
+uint8_t RTI(cpu6502 *cpu); //
+uint8_t RTS(cpu6502 *cpu); //
 uint8_t SBC(cpu6502 *cpu); //
 uint8_t SEC(cpu6502 *cpu); //
 uint8_t SED(cpu6502 *cpu); //

@@ -1,6 +1,7 @@
 #include "instructions.h"
 #include "addressing_modes.h"
 #include "cpu.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 // ADD WITH CARRY
@@ -342,10 +343,57 @@ uint8_t LDY(cpu6502 *cpu) {
     return 1;
 }
 
+uint8_t LSR(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    CpuSetFlag(cpu, C, cpu->fetched & 0x0001);
+    cpu->temp = cpu->fetched>>1;
+    CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0x0000);
+    CpuSetFlag(cpu, N, cpu->temp & (1<<7));
+
+    if (cpu->lookup[cpu->opcode].addrmode == IMP) {
+        cpu->a = cpu->temp & 0x00FF;
+    } else {
+        CpuWriteFromBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
+    }
+    return 0;
+}
+
+// this instruction just wastes time
+uint8_t NOP(cpu6502 *cpu) {
+    switch (cpu->opcode) {
+        case 0x1C:
+        case 0x3C:
+        case 0x5C:
+        case 0x7C:
+        case 0xDC:
+        case 0xFC:
+            return 1;
+            break;
+    }
+    return 1;
+}
+
+uint8_t ORA(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->a = cpu->addr_abs | cpu->fetched;
+    CpuSetFlag(cpu, Z, cpu->a == 0x00);
+    CpuSetFlag(cpu, N, cpu->a & 0x80);
+    return 1;
+}
+
 // Put into stack from accumulator
 uint8_t PHA(cpu6502 *cpu) {
     // Stackpointer is always an offset to the memory location of 0x0100
     CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->a);
+    cpu->stkp--;
+    return 0;
+}
+
+// push processor status to stack
+uint8_t PHP(cpu6502 *cpu) {
+    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->status | B | U);
+    CpuSetFlag(cpu, B, false);
+    CpuSetFlag(cpu, U, false);
     cpu->stkp--;
     return 0;
 }
@@ -356,6 +404,67 @@ uint8_t PLA(cpu6502 *cpu) {
     cpu->a = CpuReadFromBus(cpu, 0x0100 + cpu->stkp);
     CpuSetFlag(cpu, Z, cpu->a==0x00);
     CpuSetFlag(cpu, N, cpu->a&0x80);
+    return 0;
+}
+
+// Pull status from stack
+uint8_t PLP(cpu6502 *cpu) {
+    cpu->stkp++;
+    cpu->status = CpuReadFromBus(cpu, cpu->stkp);
+    CpuSetFlag(cpu, U, true);
+    return 0;
+}
+
+uint8_t ROL(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->temp = (uint16_t)(cpu->fetched << 1) | CpuGetFlag(cpu, C);
+    CpuSetFlag(cpu, C, cpu->temp & 0xFF00);
+    CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0x0000);
+    CpuSetFlag(cpu, N, cpu->temp & (1<<7));
+    if (cpu->lookup[cpu->opcode].addrmode == IMP) {
+        cpu->a = cpu->temp & 0x00FF;
+    } else {
+        CpuWriteFromBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
+    }
+    return 0;
+}
+
+uint8_t ROR(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->temp = (uint16_t)(cpu->fetched >> 1) | (CpuGetFlag(cpu, C) << 7);
+    CpuSetFlag(cpu, C, cpu->temp & 0x0001);
+    CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0x0000);
+    CpuSetFlag(cpu, N, cpu->temp & (1<<7));
+    if (cpu->lookup[cpu->opcode].addrmode == IMP) {
+        cpu->a = cpu->temp & 0x00FF;
+    } else {
+        CpuWriteFromBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
+    }
+    return 0;
+}
+
+// Return from interrupt
+uint8_t RTI(cpu6502 *cpu) {
+    cpu->stkp++;
+    cpu->status = CpuReadFromBus(cpu, 0x0100 + cpu->stkp);
+    cpu->status &= ~B;
+    cpu->status &= ~U;
+
+    cpu->stkp++;
+    cpu->pc = (uint16_t)CpuReadFromBus(cpu, 0x0100 + cpu->stkp);
+    cpu->stkp++;
+    cpu->pc |= (uint16_t)CpuReadFromBus(cpu, 0x0100 + cpu->stkp) << 8;
+    return 0;
+}
+
+// Return from subroutine
+uint8_t RTS(cpu6502 *cpu) {
+    cpu->stkp++;
+    cpu->pc = (uint16_t)CpuReadFromBus(cpu, 0x0100 + cpu->stkp);
+    cpu->stkp++;
+    cpu->pc |= (uint16_t)CpuReadFromBus(cpu, 0x0100 + cpu->stkp) << 8;
+
+    cpu->pc++;
     return 0;
 }
 
@@ -445,3 +554,6 @@ uint8_t TYA(cpu6502 *cpu) {
     return 0;
 }
 
+uint8_t XXX(cpu6502 *cpu) {
+    return 0;
+}
