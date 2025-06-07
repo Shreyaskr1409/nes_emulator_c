@@ -270,6 +270,78 @@ uint8_t DEY(cpu6502 *cpu) {
     return 0;
 }
 
+uint8_t EOR(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->a = cpu->a ^ cpu->fetched;
+    CpuSetFlag(cpu, Z, (cpu->a & 0x00FF) == 0x0000);
+    CpuSetFlag(cpu, N, cpu->a & (1<<7));
+    return 1;
+}
+
+uint8_t INC(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->temp = cpu->fetched + 1;
+    CpuWriteFromBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
+    CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0x0000);
+    CpuSetFlag(cpu, N, cpu->temp & (1<<7));
+    return 0;
+}
+
+uint8_t INX(cpu6502 *cpu) {
+    cpu->x = cpu->x + 1;
+    CpuSetFlag(cpu, Z, cpu->x == 0x00);
+    CpuSetFlag(cpu, N, cpu->x & (1<<7));
+    return 0;
+}
+
+uint8_t INY(cpu6502 *cpu) {
+    cpu->y = cpu->y + 1;
+    CpuSetFlag(cpu, Z, cpu->y == 0x00);
+    CpuSetFlag(cpu, N, cpu->y & (1<<7));
+    return 0;
+}
+
+uint8_t JMP(cpu6502 *cpu) {
+    cpu->pc = cpu->addr_abs;
+    return 0;
+}
+
+// Jump to subroutine
+uint8_t JSR(cpu6502 *cpu) {
+    cpu->pc--;
+    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc >> 8) & 0x00FF);
+    cpu->stkp--;
+    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->pc & 0x00FF);
+    cpu->stkp--;
+
+    cpu->pc = cpu->addr_abs;
+    return 0;
+}
+
+uint8_t LDA(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->a = cpu->fetched;
+    CpuSetFlag(cpu, Z, cpu->a == 0x00);
+    CpuSetFlag(cpu, N, cpu->a & (1<<7));
+    return 1;
+}
+
+uint8_t LDX(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->x = cpu->fetched;
+    CpuSetFlag(cpu, Z, cpu->x == 0x00);
+    CpuSetFlag(cpu, N, cpu->x & (1<<7));
+    return 1;
+}
+
+uint8_t LDY(cpu6502 *cpu) {
+    CpuFetchFromBus(cpu);
+    cpu->y = cpu->fetched;
+    CpuSetFlag(cpu, Z, cpu->y == 0x00);
+    CpuSetFlag(cpu, N, cpu->y & (1<<7));
+    return 1;
+}
+
 // Put into stack from accumulator
 uint8_t PHA(cpu6502 *cpu) {
     // Stackpointer is always an offset to the memory location of 0x0100
