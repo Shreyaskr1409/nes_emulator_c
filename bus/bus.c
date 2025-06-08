@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 
-void BusIni(Bus *bus) {
+void BusInit(Bus *bus) {
     CpuInit(bus->cpu);
     CpuConnectBus(bus->cpu, bus);
     memset(bus->ram, 0x00, RAM_SIZE);

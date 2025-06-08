@@ -230,7 +230,7 @@ uint8_t CMP(cpu6502 *cpu) {
     return 1;
 }
 
-uint8_t CMX(cpu6502 *cpu) {
+uint8_t CPX(cpu6502 *cpu) {
     CpuFetchFromBus(cpu);
     cpu->temp = cpu->x - cpu->fetched;
     CpuSetFlag(cpu, C, cpu->x >= cpu->fetched);
@@ -239,7 +239,7 @@ uint8_t CMX(cpu6502 *cpu) {
     return 1;
 }
 
-uint8_t CMY(cpu6502 *cpu) {
+uint8_t CPY(cpu6502 *cpu) {
     CpuFetchFromBus(cpu);
     cpu->temp = cpu->y - cpu->fetched;
     CpuSetFlag(cpu, C, cpu->y >= cpu->fetched);
@@ -544,6 +544,11 @@ uint8_t TSY(cpu6502 *cpu) {
     cpu->y = cpu->stkp;
     CpuSetFlag(cpu, Z, cpu->y == 0x00);
     CpuSetFlag(cpu, N, cpu->y & (1<<7));
+    return 0;
+}
+
+uint8_t TXS(cpu6502 *cpu) {
+    cpu->stkp = cpu->x;
     return 0;
 }
 
