@@ -1,11 +1,8 @@
-#include "cpu.h"
-#include "../bus/bus.h"
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "cpu_test.h"
 
 uint8_t RAM[64 * 1024];
-char ines_file[] = "../test-roms/nestest.nes";
+char ines_file[] = "test-roms/nestest.nes";
+char log_file[] = "test-roms/nestest.log";
 
 void loadNestestRom(Bus *bus, const char* filename) {
     // rb here means read in binary mode
@@ -26,8 +23,8 @@ void loadNestestRom(Bus *bus, const char* filename) {
     if (fread(header, // to store the data read
                 1, // 1 byte read at a time
                 16, //16 bytes to read
-                fptr)) {
-        perror("Could not read the iNES header");
+                fptr) != 16) {
+        perror("Could not read the iNES header (<16 bytes)");
         exit(EXIT_FAILURE);
     }
 
@@ -38,30 +35,50 @@ void loadNestestRom(Bus *bus, const char* filename) {
         exit(EXIT_FAILURE);
     }
 
-    uint8_t program_size = header[4] * 16 * 1024;
-    if (program_size != !0x4000) {
+    printf("HEADER starts with: %c%c%c \n", header[0], header[1], header[2]);
+
+    uint32_t program_size = header[4] * 16 * 1024;
+    if (program_size != 0x4000) {
         printf("WARNING: Expected 16kb program rom. Found %d bytes.\n", program_size);
     }
 
-    // seek at 16 bytes offset
     fseek(fptr, 16, SEEK_SET);
 
     if (fread(&bus->ram[0xC000], 1, program_size, fptr) != program_size) {
         perror("Failed to read the ROM data");
         exit(EXIT_FAILURE);
     }
+    print_ram_range(bus, 0xC000, 16);
 
     fclose(fptr);
     printf("INFO: Success in loading iNES ROM into 0xC000-0xFFFF.\n");
+}
+
+void print_ram_range(Bus *bus, uint16_t start_address, int num_bytes) {
+    printf("-------------------------------------------------\n");
+    printf("RAM from 0x%04X:\n", start_address);
+    for (int i = 0; i < num_bytes; ++i) {
+        // Ensure we don't go out of bounds of the ram array
+        if (start_address + i >= RAM_SIZE) {
+            printf(" (End of RAM reached)\n");
+            break;
+        }
+        printf("0x%04X: 0x%02X ", start_address + i, bus->ram[start_address + i]);
+
+        if ((i + 1) % 8 == 0) {
+            printf("\n");
+        }
+    }
+    printf("-------------------------------------------------\n");
 }
 
 int main() {
     Bus bus;
     cpu6502 cpu;
 
-    BusInit(&bus);
-    CpuInit(&cpu);
-    CpuConnectBus(&cpu, &bus);
+    BusInit(&bus, &cpu);
+    printf("-------------------------------------------------\n");
+    printf("Bus and CPU initiated.\n");
 
     loadNestestRom(&bus, ines_file);
 
@@ -72,11 +89,15 @@ int main() {
     /////////////////////////////////////////////////////////////////////////////
 
     // OPENING A FILE TO LOG INTO
-    FILE* log_fptr = fopen("../test-roms/nestest.log", "a+");
+    printf("Log file's path is configured as: .%s \n", log_file);
+    FILE* log_fptr = fopen(log_file, "a+");
     if (!log_fptr) {
         perror("Error opening a file to log into");
         exit(EXIT_FAILURE);
     }
+    printf("Log file is found. Logging has started successfully!\n");
+    printf("-------------------------------------------------\n");
+
     fprintf(log_fptr, "Logging starts \n");
     fflush(log_fptr);
 

@@ -11,7 +11,7 @@ typedef struct Bus {
     uint8_t ram[RAM_SIZE];
 } Bus;
 
-void BusInit(Bus *bus);
+void BusInit(Bus *bus, cpu6502 *cpu);
 void BusDestroy(Bus *bus);
 
 void BusWrite(Bus *bus, uint16_t addr, uint8_t data);

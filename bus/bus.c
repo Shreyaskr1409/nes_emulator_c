@@ -2,7 +2,8 @@
 #include <stdint.h>
 #include <string.h>
 
-void BusInit(Bus *bus) {
+void BusInit(Bus *bus, cpu6502 *cpu) {
+    bus->cpu = cpu;
     CpuInit(bus->cpu);
     CpuConnectBus(bus->cpu, bus);
     memset(bus->ram, 0x00, RAM_SIZE);
