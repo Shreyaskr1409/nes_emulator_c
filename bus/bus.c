@@ -2,6 +2,9 @@
 #include <stdint.h>
 #include <string.h>
 
+// simply a clock function
+uint32_t nSysClkCounter = 0;
+
 void BusInit(Bus *bus, cpu6502 *cpu, ppu2C02 *ppu) {
     bus->cpu = cpu;
     bus->ppu = ppu;
@@ -35,4 +38,13 @@ uint8_t BusRead(Bus *bus, uint16_t addr, bool bReadOnly) {
     }
 
     return 0x00;
+}
+
+void BusReset(Bus *bus) {
+    CpuReset(bus->cpu);
+}
+
+void BusInsertCartridge(Bus *bus, cartridge *cart) {
+    bus->cart = cart;
+    PpuConnectCartridge(bus->ppu, cart);
 }

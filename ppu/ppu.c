@@ -48,3 +48,18 @@ void PpuWriteToCpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
             break;
     }
 }
+
+uint8_t PpuReadFromPpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
+    uint8_t data = 0x00;
+    addr &= 0x3FFF;
+
+    return data;
+}
+
+void PpuWriteToPpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
+    addr &= 0x3FFF;
+}
+
+void PpuConnectCartridge(ppu2C02 *ppu, cartridge *cart) {
+    ppu->cart = cart;
+}
