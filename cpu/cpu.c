@@ -54,7 +54,7 @@ void CpuInit(cpu6502 *cpu) {
 uint8_t CpuReadFromBus(cpu6502 *cpu, uint16_t addr) {
     return BusRead(cpu->bus, addr, false);
 }
-void CpuWriteFromBus(cpu6502 *cpu, uint16_t addr, uint8_t data) {
+void CpuWriteToCpuBus(cpu6502 *cpu, uint16_t addr, uint8_t data) {
     BusWrite(cpu->bus, addr, data);
 }
 uint8_t CpuFetchFromBus(cpu6502 *cpu) {
@@ -90,15 +90,15 @@ void CpuReset(cpu6502 *cpu) {
 void CpuIRQ(cpu6502 *cpu) {
     // if interrupt flag is 0, then we can perform the interrupt request (IRQ)
     if (CpuGetFlag(cpu, I) == 0) {
-        CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc>>8) & 0x00FF);
+        CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, (cpu->pc>>8) & 0x00FF);
         cpu->stkp--;
-        CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc) & 0x00FF);
+        CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, (cpu->pc) & 0x00FF);
         cpu->stkp--;
 
         CpuSetFlag(cpu, B, 0);
         CpuSetFlag(cpu, U, 1);
         CpuSetFlag(cpu, I, 1);
-        CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->status);
+        CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, cpu->status);
         cpu->stkp--;
 
         cpu->addr_abs = 0xFFFE;
@@ -113,15 +113,15 @@ void CpuIRQ(cpu6502 *cpu) {
 void CpuNMI(cpu6502 *cpu) {
     // similar to IRQ but does not require I-flag to be 0 and pc is
     // set to address from 0xFFFA
-    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc>>8) & 0x00FF);
+    CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, (cpu->pc>>8) & 0x00FF);
     cpu->stkp--;
-    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc) & 0x00FF);
+    CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, (cpu->pc) & 0x00FF);
     cpu->stkp--;
 
     CpuSetFlag(cpu, B, 0);
     CpuSetFlag(cpu, U, 1);
     CpuSetFlag(cpu, I, 1);
-    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->status);
+    CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, cpu->status);
     cpu->stkp--;
 
     cpu->addr_abs = 0xFFFA;

@@ -4,11 +4,11 @@
 #include <stdbool.h>
 #include "../cpu/cpu.h"
 
-#define RAM_SIZE (64 * 1024)
+#define CPU_RAM_SIZE (2 * 1024)
 
 typedef struct Bus {
     cpu6502 *cpu;
-    uint8_t ram[RAM_SIZE];
+    uint8_t cpuRam[CPU_RAM_SIZE];
 } Bus;
 
 void BusInit(Bus *bus, cpu6502 *cpu);

@@ -67,5 +67,5 @@ uint8_t CpuGetFlag(cpu6502 *cpu, enum CPU_FLAGS f);
 void CpuSetFlag(cpu6502 *cpu, enum CPU_FLAGS f, bool v);
 
 uint8_t CpuReadFromBus(cpu6502 *cpu, uint16_t addr);
-void CpuWriteFromBus(cpu6502 *cpu, uint16_t addr, uint8_t data);
+void CpuWriteToCpuBus(cpu6502 *cpu, uint16_t addr, uint8_t data);
 uint8_t CpuFetchFromBus(cpu6502 *cpu);

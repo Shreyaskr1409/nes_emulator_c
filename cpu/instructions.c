@@ -53,7 +53,7 @@ uint8_t ASL(cpu6502 *cpu) {
     if (cpu->lookup[cpu->opcode].addrmode == IMP) {
         cpu->a = cpu->temp & 0x00FF;
     } else {
-        CpuWriteFromBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
+        CpuWriteToCpuBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
     }
     return 0;
 }
@@ -160,16 +160,16 @@ uint8_t BPL(cpu6502 *cpu) {
 uint8_t BRK(cpu6502 *cpu) {
     // Set interrupt as ON before doing anything
     CpuSetFlag(cpu, I, true);
-    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc >> 8) & 0x00FF);
+    CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, (cpu->pc >> 8) & 0x00FF);
     cpu->stkp--;
-    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->pc & 0x00FF);
+    CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, cpu->pc & 0x00FF);
     cpu->stkp--;
 
     // Storing flags to the stkp so that whenever someone jumps
     // to the location in the memory, it knows the flags which were
     // present at the time when BRK was executed
     CpuSetFlag(cpu, B, true);
-    CpuWriteFromBus(cpu, cpu->stkp, cpu->status);
+    CpuWriteToCpuBus(cpu, cpu->stkp, cpu->status);
     cpu->stkp--;
     CpuSetFlag(cpu, B, false);
 
@@ -253,7 +253,7 @@ uint8_t DEC(cpu6502 *cpu) {
     cpu->temp = cpu->fetched - 1;
     CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0);
     CpuSetFlag(cpu, N, cpu->temp & (1<<7));
-    CpuWriteFromBus(cpu, cpu->addr_abs, cpu->temp);
+    CpuWriteToCpuBus(cpu, cpu->addr_abs, cpu->temp);
     return 0;
 }
 
@@ -282,7 +282,7 @@ uint8_t EOR(cpu6502 *cpu) {
 uint8_t INC(cpu6502 *cpu) {
     CpuFetchFromBus(cpu);
     cpu->temp = cpu->fetched + 1;
-    CpuWriteFromBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
+    CpuWriteToCpuBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
     CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0x0000);
     CpuSetFlag(cpu, N, cpu->temp & (1<<7));
     return 0;
@@ -310,9 +310,9 @@ uint8_t JMP(cpu6502 *cpu) {
 // Jump to subroutine
 uint8_t JSR(cpu6502 *cpu) {
     cpu->pc--;
-    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, (cpu->pc >> 8) & 0x00FF);
+    CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, (cpu->pc >> 8) & 0x00FF);
     cpu->stkp--;
-    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->pc & 0x00FF);
+    CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, cpu->pc & 0x00FF);
     cpu->stkp--;
 
     cpu->pc = cpu->addr_abs;
@@ -353,7 +353,7 @@ uint8_t LSR(cpu6502 *cpu) {
     if (cpu->lookup[cpu->opcode].addrmode == IMP) {
         cpu->a = cpu->temp & 0x00FF;
     } else {
-        CpuWriteFromBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
+        CpuWriteToCpuBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
     }
     return 0;
 }
@@ -384,14 +384,14 @@ uint8_t ORA(cpu6502 *cpu) {
 // Put into stack from accumulator
 uint8_t PHA(cpu6502 *cpu) {
     // Stackpointer is always an offset to the memory location of 0x0100
-    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->a);
+    CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, cpu->a);
     cpu->stkp--;
     return 0;
 }
 
 // push processor status to stack
 uint8_t PHP(cpu6502 *cpu) {
-    CpuWriteFromBus(cpu, 0x0100 + cpu->stkp, cpu->status | B | U);
+    CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, cpu->status | B | U);
     CpuSetFlag(cpu, B, false);
     CpuSetFlag(cpu, U, false);
     cpu->stkp--;
@@ -424,7 +424,7 @@ uint8_t ROL(cpu6502 *cpu) {
     if (cpu->lookup[cpu->opcode].addrmode == IMP) {
         cpu->a = cpu->temp & 0x00FF;
     } else {
-        CpuWriteFromBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
+        CpuWriteToCpuBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
     }
     return 0;
 }
@@ -438,7 +438,7 @@ uint8_t ROR(cpu6502 *cpu) {
     if (cpu->lookup[cpu->opcode].addrmode == IMP) {
         cpu->a = cpu->temp & 0x00FF;
     } else {
-        CpuWriteFromBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
+        CpuWriteToCpuBus(cpu, cpu->addr_abs, cpu->temp & 0x00FF);
     }
     return 0;
 }
@@ -498,17 +498,17 @@ uint8_t SEI(cpu6502 *cpu) {
 }
 
 uint8_t STA(cpu6502 *cpu) {
-    CpuWriteFromBus(cpu, cpu->addr_abs, cpu->a);
+    CpuWriteToCpuBus(cpu, cpu->addr_abs, cpu->a);
     return 0;
 }
 
 uint8_t STX(cpu6502 *cpu) {
-    CpuWriteFromBus(cpu, cpu->addr_abs, cpu->x);
+    CpuWriteToCpuBus(cpu, cpu->addr_abs, cpu->x);
     return 0;
 }
 
 uint8_t STY(cpu6502 *cpu) {
-    CpuWriteFromBus(cpu, cpu->addr_abs, cpu->y);
+    CpuWriteToCpuBus(cpu, cpu->addr_abs, cpu->y);
     return 0;
 }
 

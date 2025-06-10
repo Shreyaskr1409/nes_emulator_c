@@ -2,7 +2,7 @@
 #include "cpu.h"
 #include <stdio.h>
 
-uint8_t RAM[64 * 1024];
+uint8_t cpuRam[64 * 1024];
 char ines_file[] = "test-roms/nestest.nes";
 char log_file[] = "test-roms/nestest.log";
 
@@ -47,7 +47,7 @@ void loadNestestRom(Bus *bus, const char* filename) {
 
     fseek(fptr, 16, SEEK_SET);
 
-    if (fread(&bus->ram[0xC000], 1, program_size, fptr) != program_size) {
+    if (fread(&bus->cpuRam[0xC000], 1, program_size, fptr) != program_size) {
         perror("Failed to read the ROM data");
         exit(EXIT_FAILURE);
     }
@@ -59,14 +59,14 @@ void loadNestestRom(Bus *bus, const char* filename) {
 
 void print_ram_range(Bus *bus, uint16_t start_address, int num_bytes) {
     printf("-------------------------------------------------\n");
-    printf("RAM from 0x%04X:\n", start_address);
+    printf("cpuRam from 0x%04X:\n", start_address);
     for (int i = 0; i < num_bytes; ++i) {
-        // Ensure we don't go out of bounds of the ram array
-        if (start_address + i >= RAM_SIZE) {
-            printf(" (End of RAM reached)\n");
+        // Ensure we don't go out of bounds of the cpuRam array
+        if (start_address + i >= CPU_RAM_SIZE) {
+            printf(" (End of cpuRam reached)\n");
             break;
         }
-        printf("0x%04X: 0x%02X ", start_address + i, bus->ram[start_address + i]);
+        printf("0x%04X: 0x%02X ", start_address + i, bus->cpuRam[start_address + i]);
 
         if ((i + 1) % 8 == 0) {
             printf("\n");
