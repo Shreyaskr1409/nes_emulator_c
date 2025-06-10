@@ -1,4 +1,6 @@
 #include "cpu_test.h"
+#include "cpu.h"
+#include <stdio.h>
 
 uint8_t RAM[64 * 1024];
 char ines_file[] = "test-roms/nestest.nes";
@@ -41,6 +43,7 @@ void loadNestestRom(Bus *bus, const char* filename) {
     if (program_size != 0x4000) {
         printf("WARNING: Expected 16kb program rom. Found %d bytes.\n", program_size);
     }
+    printf("PROGRAM SIZE: %d\n", program_size);
 
     fseek(fptr, 16, SEEK_SET);
 
@@ -100,7 +103,6 @@ int main() {
 
     fprintf(log_fptr, "Logging starts \n");
     fflush(log_fptr);
-
 
     fclose(log_fptr);
     return 0;
