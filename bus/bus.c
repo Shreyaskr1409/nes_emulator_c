@@ -2,8 +2,9 @@
 #include <stdint.h>
 #include <string.h>
 
-void BusInit(Bus *bus, cpu6502 *cpu) {
+void BusInit(Bus *bus, cpu6502 *cpu, ppu2C02 *ppu) {
     bus->cpu = cpu;
+    bus->ppu = ppu;
     CpuInit(bus->cpu);
     CpuConnectBus(bus->cpu, bus);
     memset(bus->cpuRam, 0x00, CPU_RAM_SIZE);
@@ -12,8 +13,11 @@ void BusInit(Bus *bus, cpu6502 *cpu) {
 void BusDestroy(Bus *bus) {}
 
 void BusWrite(Bus *bus, uint16_t addr, uint8_t data) {
+
     if (0x0000<=addr && addr <=0x1FFF) {
         bus->cpuRam[addr & 0x07FF] = data;
+    } else if (addr >= 0x2000 && addr <= 0x3FFF) {
+        PpuWriteToCpuBus(bus->ppu, addr & 0x0007, data);
     }
 
     // hopefully we do not have to encounter a situation
@@ -26,6 +30,9 @@ uint8_t BusRead(Bus *bus, uint16_t addr, bool bReadOnly) {
 
     if (0x0000<=addr && addr <=0x1FFF) {
         data = bus->cpuRam[addr & 0x07FF];
+    } else if (addr >= 0x2000 && addr <= 0x3FFF) {
+        data = PpuReadFromCpuBus(bus->ppu, addr & 0x0007, false);
     }
+
     return 0x00;
 }
