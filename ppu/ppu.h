@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <stdbool.h>
 #include <stdint.h>
 #include "../cartridge/cartridge.h"

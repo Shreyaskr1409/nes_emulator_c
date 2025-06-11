@@ -1,8 +1,8 @@
 #include "cpu_test.h"
 #include "cpu.h"
+#include <stdint.h>
 #include <stdio.h>
 
-uint8_t cpuRam[64 * 1024];
 char ines_file[] = "test-roms/nestest.nes";
 char log_file[] = "test-roms/nestest.log";
 
@@ -47,14 +47,14 @@ void loadNestestRom(Bus *bus, const char* filename) {
 
     fseek(fptr, 16, SEEK_SET);
 
-    if (fread(&bus->cpuRam[0xC000], 1, program_size, fptr) != program_size) {
+    if (fread(&bus->cpuRam[0x0000], 1, program_size, fptr) != program_size) {
         perror("Failed to read the ROM data");
         exit(EXIT_FAILURE);
     }
-    print_ram_range(bus, 0xC000, 16);
+    print_ram_range(bus, 0x0000, 16);
 
     fclose(fptr);
-    printf("INFO: Success in loading iNES ROM into 0xC000-0xFFFF.\n");
+    printf("INFO: Success in loading iNES ROM into 0x0000-0x1FFF.\n");
 }
 
 void print_ram_range(Bus *bus, uint16_t start_address, int num_bytes) {
@@ -78,8 +78,9 @@ void print_ram_range(Bus *bus, uint16_t start_address, int num_bytes) {
 int main() {
     Bus bus;
     cpu6502 cpu;
+    ppu2C02 ppu;
 
-    BusInit(&bus, &cpu);
+    BusInit(&bus, &cpu, &ppu);
     printf("-------------------------------------------------\n");
     printf("Bus and CPU initiated.\n");
 
