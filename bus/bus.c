@@ -17,7 +17,9 @@ void BusDestroy(Bus *bus) {}
 
 void BusWrite(Bus *bus, uint16_t addr, uint8_t data) {
 
-    if (0x0000<=addr && addr <=0x1FFF) {
+    if (CartWriteToCpuBus(bus->cart, addr, data)) {
+        // TODO
+    } else if (0x0000<=addr && addr <=0x1FFF) {
         bus->cpuRam[addr & 0x07FF] = data;
     } else if (addr >= 0x2000 && addr <= 0x3FFF) {
         PpuWriteToCpuBus(bus->ppu, addr & 0x0007, data);
@@ -31,6 +33,9 @@ void BusWrite(Bus *bus, uint16_t addr, uint8_t data) {
 uint8_t BusRead(Bus *bus, uint16_t addr, bool bReadOnly) {
     uint8_t data = 0x00;
 
+    if (CartReadFromCpuBus(bus->cart, addr, &data)) {
+        // TODO
+    }
     if (0x0000<=addr && addr <=0x1FFF) {
         data = bus->cpuRam[addr & 0x07FF];
     } else if (addr >= 0x2000 && addr <= 0x3FFF) {
