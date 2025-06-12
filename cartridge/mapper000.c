@@ -8,6 +8,10 @@ static bool ppuMapWrite(struct Mapper* mapper, uint16_t addr, uint32_t* mapped_a
 
 void Mapper000Init(Mapper *mapper, uint8_t nPRGBanks, uint8_t nCHRBanks) {
     MapperInit(mapper, nPRGBanks, nCHRBanks);
+    mapper->cpuMapRead = cpuMapRead;
+    mapper->cpuMapWrite = cpuMapWrite;
+    mapper->ppuMapRead = ppuMapRead;
+    mapper->ppuMapWrite = ppuMapWrite;
 }
 
 static bool cpuMapRead(struct Mapper* mapper, uint16_t addr, uint32_t* mapped_addr) {

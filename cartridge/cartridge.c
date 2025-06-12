@@ -1,4 +1,5 @@
 #include "cartridge.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -59,5 +60,54 @@ void CartInit(cartridge *cart, const char* sFileName) {
         // TODO
     }
 
+    Mapper pMapper;
+    switch (cart->nMapperId) {
+        case 0:
+            Mapper000Init(&pMapper, cart->nPRGBanks, cart->nCHRBanks);
+            break;
+        default:
+            fprintf(stderr, "Could not find appropriate available mapper.\n");
+    }
+
     fclose(ifs);
+}
+
+bool CartReadFromCpuBus(cartridge *cart, uint16_t addr, uint8_t *data) {
+    uint32_t mapped_addr = 0; // temp variable
+    // if the mapper is supposed to read from the data provided on the CpuBus,
+    // the mapper will map the address such that it can be accessed from the
+    // memory without giving any error for index out of bounds
+    // else we will pass it on for other devices on CpuBus to handle the data
+    if (cart->pMapper.cpuMapRead(&cart->pMapper, addr, &mapped_addr)) {
+        *data = cart->vPRGMem[mapped_addr];
+        return true;
+    }
+    return false;
+}
+
+bool CartWriteToCpuBus(cartridge *cart, uint16_t addr, uint8_t data) {
+    uint32_t mapped_addr = 0;
+    if (cart->pMapper.cpuMapWrite(&cart->pMapper, addr, &mapped_addr)) {
+        cart->vPRGMem[mapped_addr] = data;
+        return true;
+    }
+    return false;
+}
+
+bool CartReadFromPpuBus(cartridge *cart, uint16_t addr, uint8_t *data) {
+    uint32_t mapped_addr = 0;
+    if (cart->pMapper.ppuMapWrite(&cart->pMapper, addr, &mapped_addr)) {
+        *data = cart->vCHRMem[mapped_addr];
+        return true;
+    }
+    return false;
+}
+
+bool CartWriteToPpuBus(cartridge *cart, uint16_t addr, uint8_t data) {
+    uint32_t mapped_addr = 0;
+    if (cart->pMapper.ppuMapWrite(&cart->pMapper, addr, &mapped_addr)) {
+        cart->vCHRMem[mapped_addr] = data;
+        return true;
+    }
+    return false;
 }

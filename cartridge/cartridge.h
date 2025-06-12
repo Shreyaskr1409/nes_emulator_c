@@ -3,6 +3,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "mapper.h"
+#include "mapper000.h"
+
+
 typedef struct cartridge {
     // This shoudl cover most of the mappers
     uint8_t vPRGMem[32*16*1024];
@@ -25,6 +29,8 @@ typedef struct cartridge {
     } header;
 
     bool bImageValid;
+
+    Mapper pMapper;
 } cartridge;
 
 void CartInit(cartridge *cart, const char* sFileName);
