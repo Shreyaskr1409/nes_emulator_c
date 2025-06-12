@@ -1,3 +1,2 @@
 NEXT TASK:
-- Add Read and Write functions for cartridge
-- Fix the stack smashing issue from nestest
+- Write tests using Raylib and NES
