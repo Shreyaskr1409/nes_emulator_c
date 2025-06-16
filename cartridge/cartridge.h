@@ -33,7 +33,7 @@ typedef struct cartridge {
     Mapper pMapper;
 } cartridge;
 
-void CartInit(cartridge *cart, const char* sFileName);
+bool CartInit(cartridge *cart, const char* sFileName);
 
 bool CartReadFromCpuBus(cartridge* cart, uint16_t addr, uint8_t* data);
 bool CartWriteToCpuBus(cartridge* cart, uint16_t addr, uint8_t data);

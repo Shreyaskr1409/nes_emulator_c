@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-void CartInit(cartridge *cart, const char* sFileName) {
+bool CartInit(cartridge *cart, const char* sFileName) {
     cart->nMapperId = 0;
     cart->nPRGBanks = 0;
     cart->nCHRBanks = 0;
@@ -13,7 +13,7 @@ void CartInit(cartridge *cart, const char* sFileName) {
     FILE* ifs = fopen(sFileName, "rb");
     if (ifs == NULL) {
         fprintf(stderr, "Error: Could not open file %s\n", sFileName);
-        return;
+        return false;
     }
 
     fread(&cart->header, sizeof(struct sHeader), 1, ifs);
@@ -21,7 +21,7 @@ void CartInit(cartridge *cart, const char* sFileName) {
     if (strncmp(cart->header.name, "NES", 3) != 0) {
         fprintf(stderr, "Error: Invalid iNES header (missing 'NES' signature)\n");
         fclose(ifs);
-        return;
+        return false;
     }
 
     // Skip the "trainer" if it exists
@@ -42,7 +42,7 @@ void CartInit(cartridge *cart, const char* sFileName) {
             fprintf(stderr, "Size of PRG_ROM too large for the allocated memory. Expected: < %lu, Recieved: %u",
                     sizeof(cart->vPRGMem), (cart->nPRGBanks * 16384));
             fclose(ifs);
-            return;
+            return false;
         }
         fread(cart->vPRGMem, sizeof(uint8_t), cart->nPRGBanks, ifs);
 
@@ -52,7 +52,7 @@ void CartInit(cartridge *cart, const char* sFileName) {
             fprintf(stderr, "Size of CHR_ROM too large for the allocated memory. Expected: < %lu, Recieved: %u",
                     sizeof(cart->vCHRMem), (cart->nCHRBanks * 16384));
             fclose(ifs);
-            return;
+            return false;
         }
         fread(cart->vCHRMem, sizeof(uint8_t), cart->nCHRBanks, ifs);
     }
@@ -67,9 +67,11 @@ void CartInit(cartridge *cart, const char* sFileName) {
             break;
         default:
             fprintf(stderr, "Could not find appropriate available mapper.\n");
+            return false;
     }
 
     fclose(ifs);
+    return true;
 }
 
 bool CartReadFromCpuBus(cartridge *cart, uint16_t addr, uint8_t *data) {
