@@ -2,6 +2,7 @@
 #include "../bus/bus.h"
 #include "addressing_modes.h"
 #include "instructions.h"
+#include "stc/cstr.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -170,4 +171,89 @@ bool CpuComplete(cpu6502 *cpu) {
 }
 void CpuConnectBus(cpu6502 *cpu, struct Bus *bus) {
     cpu->bus = bus;
+}
+
+
+// ------------------DISASSEMBLER-------------------- //
+// // utility to convert variables into hexadecimal strings
+// static cstr hex(uint32_t n, uint8_t d) {
+//     // string with d (digit count) and filled with char '0'
+//     cstr s = cstr_with_size(d, '0');
+//     char repl[2] = {0}; // Single char + null terminator
+//
+//     // shift by 16 bits at a time
+//     for (int i = d-1; i >= 0; i--, n>>=4) {
+//         repl[0] = "0123456789ABCDEF"[n&0xF];
+//         cstr_replace_at(&s, i, 1, repl);
+//     }
+//
+//     return s;
+// }
+// disassembler
+hmap_uint16_str disassemble(cpu6502 *cpu, uint16_t nStart, uint16_t nStop) {
+    uint32_t addr = nStart;
+    uint8_t value = 0x00;
+    uint8_t lo = 0x00;
+    uint8_t hi = 0x00;
+    hmap_uint16_str mapLines = {};
+    uint16_t line_addr = 0;
+
+    while (addr <= (uint32_t)nStop) {
+        line_addr = addr;
+        cstr sInst = cstr_from_fmt("$%0*X: ", addr, 4); // 0 is the padding of 0
+                                                        // * takes the width from argument list
+                                                        // X is hexadecimal in uppercase
+        // read instruction and get its readable name
+        uint8_t opcode = CpuReadFromBus(cpu, addr);
+        cstr_append_fmt(&sInst, "%s ", cpu->lookup[cpu->opcode].name);
+
+        if (cpu->lookup[cpu->opcode].addrmode == IMP) {
+            cstr_append_fmt(&sInst, " {IMP}");
+        } else if (cpu->lookup[cpu->opcode].addrmode == IMM) {
+            value = CpuReadFromBus(cpu, addr); addr++;
+            cstr_append_fmt(&sInst, "#$%02X {IMM}", value);
+        } else if (cpu->lookup[cpu->opcode].addrmode == ZP0) {
+            lo = CpuReadFromBus(cpu, addr); addr++;
+            hi = 0x00;
+            cstr_append_fmt(&sInst, "$%02X {ZP0}", lo);
+        } else if (cpu->lookup[cpu->opcode].addrmode == ZPX) {
+            lo = CpuReadFromBus(cpu, addr); addr++;
+            hi = 0x00;
+            cstr_append_fmt(&sInst, "$%02X, X {ZPX}", lo);
+        } else if (cpu->lookup[cpu->opcode].addrmode == ZPY) {
+            lo = CpuReadFromBus(cpu, addr); addr++;
+            hi = 0x00;
+            cstr_append_fmt(&sInst, "$%02X, Y {ZPY}", lo);
+        } else if (cpu->lookup[cpu->opcode].addrmode == IZX) {
+            lo = CpuReadFromBus(cpu, addr); addr++;
+            hi = 0x00;
+            cstr_append_fmt(&sInst, "($%02X, X) {IZX}", lo);
+        } else if (cpu->lookup[cpu->opcode].addrmode == IZY) {
+            lo = CpuReadFromBus(cpu, addr); addr++;
+            hi = 0x00;
+            cstr_append_fmt(&sInst, "($%02X), Y {IZY}", lo);
+        } else if (cpu->lookup[cpu->opcode].addrmode == ABS) {
+            lo = CpuReadFromBus(cpu, addr); addr++;
+            hi = CpuReadFromBus(cpu, addr); addr++;
+            cstr_append_fmt(&sInst, "$%04X {ABS}", (uint16_t)(hi << 8) | lo);
+        } else if (cpu->lookup[cpu->opcode].addrmode == ABX) {
+            lo = CpuReadFromBus(cpu, addr); addr++;
+            hi = CpuReadFromBus(cpu, addr); addr++;
+            cstr_append_fmt(&sInst, "$%04X, X {ABX}", (uint16_t)(hi << 8) | lo);
+        } else if (cpu->lookup[cpu->opcode].addrmode == ABY) {
+            lo = CpuReadFromBus(cpu, addr); addr++;
+            hi = CpuReadFromBus(cpu, addr); addr++;
+            cstr_append_fmt(&sInst, "$%04X, Y {ABY}", (uint16_t)(hi << 8) | lo);
+        } else if (cpu->lookup[cpu->opcode].addrmode == IND) {
+            lo = CpuReadFromBus(cpu, addr); addr++;
+            hi = CpuReadFromBus(cpu, addr); addr++;
+            cstr_append_fmt(&sInst, "($%04X) {IND}", (uint16_t)(hi << 8) | lo);
+        } else if (cpu->lookup[cpu->opcode].addrmode == REL) {
+            value = CpuReadFromBus(cpu, addr); addr++;
+            cstr_append_fmt(&sInst, "$%02X [$%04X] {REL}", value, addr + (int8_t)value);
+        }
+
+        hmap_uint16_str_insert(&mapLines, line_addr, sInst);
+    }
+    return mapLines;
 }

@@ -3,6 +3,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define i_key uint16_t
+#define i_val cstr
+#define i_type hmap_uint16_str
+#include <stc/hmap.h>
+#include <stc/cstr.h>
+
 struct Bus;
 
 typedef struct cpu6502 {
@@ -69,3 +75,6 @@ void CpuSetFlag(cpu6502 *cpu, enum CPU_FLAGS f, bool v);
 uint8_t CpuReadFromBus(cpu6502 *cpu, uint16_t addr);
 void CpuWriteToCpuBus(cpu6502 *cpu, uint16_t addr, uint8_t data);
 uint8_t CpuFetchFromBus(cpu6502 *cpu);
+
+// for disassembly
+hmap_uint16_str disassemble(cpu6502 *cpu, uint16_t nStart, uint16_t nStop);
