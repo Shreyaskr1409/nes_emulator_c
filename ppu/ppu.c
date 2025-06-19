@@ -3,6 +3,9 @@
 #include <stdint.h>
 
 void PpuInit(ppu2C02 *ppu) {
+    ppu->cycle = 0;
+    ppu->scanline = 0;
+
     ppu->palScreen[0x00] = (Color){84, 84, 84, 255};
     ppu->palScreen[0x01] = (Color){0, 30, 116, 255};
     ppu->palScreen[0x02] = (Color){8, 16, 144, 255};
@@ -213,4 +216,34 @@ void PpuWriteToPpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
 
 void PpuConnectCartridge(ppu2C02 *ppu, cartridge *cart) {
     ppu->cart = cart;
+}
+
+void PpuClock(ppu2C02* ppu) {
+    // Fake some noise for the screen
+    int x = ppu->cycle - 1;
+    int y = ppu->scanline;
+    
+    // Only draw to screen if within visible area
+    if (x >= 0 && x < 256 && y >= 0 && y < 240) {
+        // Choose between two colors (0x3F or 0x30) randomly
+        Color pixel_color = (GetRandomValue(0, 1)) ? 
+            GetColor(0x3F3F3FFF) :  // Dark gray
+            GetColor(0x303030FF);   // Slightly darker gray
+        
+        // Draw pixel directly to screen or to a render texture
+        // Note: In a real emulator, you'd want to buffer this to a texture
+        // and render once per frame for performance
+        DrawPixel(x, y, pixel_color);
+    }
+
+    // Advance renderer timing
+    ppu->cycle++;
+    if (ppu->cycle >= 341) {
+        ppu->cycle = 0;
+        ppu->scanline++;
+        if (ppu->scanline >= 261) {
+            ppu->scanline = -1;
+            ppu->frame_complete = true;
+        }
+    }
 }

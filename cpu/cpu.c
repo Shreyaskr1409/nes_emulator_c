@@ -6,12 +6,12 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 
 void CpuInit(cpu6502 *cpu) {
     // here we will initialize variables and then we can assemble the lookup table
     // C does not initialize local integers by itself to 0
     // even though I will be using global ones, I will initialize them to be safe
-
     cpu->a = 0x00;
     cpu->x = 0x00;
     cpu->y = 0x00;
@@ -134,8 +134,22 @@ void CpuNMI(cpu6502 *cpu) {
     cpu->cycles = 8;
 }
 void CpuClock(cpu6502 *cpu) {
+    if (!cpu) return; // Add null check
+                      //
     if (cpu->cycles == 0) {
         cpu->opcode = CpuReadFromBus(cpu, cpu->pc);
+
+        // DEBUG: Print information before the crash
+        printf("PC: 0x%04X, Opcode: 0x%02X, Cycles: %d\n", 
+               cpu->pc, cpu->opcode, cpu->lookup[cpu->opcode].cycles);
+        printf("Addrmode ptr: %p, Operate ptr: %p\n", 
+               (void*)cpu->lookup[cpu->opcode].addrmode, 
+               (void*)cpu->lookup[cpu->opcode].operate);
+        printf("\n");
+        printf("IMM ptr: %p\n", (void*)IMM);
+        printf("BRK ptr: %p\n", (void*)BRK);
+        printf("\n");
+
         cpu->pc++;
 
         cpu->cycles = cpu->lookup[cpu->opcode].cycles;

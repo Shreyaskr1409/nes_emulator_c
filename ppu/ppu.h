@@ -21,6 +21,9 @@ typedef struct ppu2C02 {
     Texture2D *texPatternTable[2];
 
     bool frame_complete;
+
+    int16_t scanline;
+    int16_t cycle;
 } ppu2C02;
 
 void PpuInit(ppu2C02* ppu);

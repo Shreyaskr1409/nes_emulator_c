@@ -64,6 +64,7 @@ bool CartInit(cartridge *cart, const char* sFileName) {
     switch (cart->nMapperId) {
         case 0:
             Mapper000Init(&pMapper, cart->nPRGBanks, cart->nCHRBanks);
+            cart->pMapper = pMapper;
             break;
         default:
             fprintf(stderr, "Could not find appropriate available mapper.\n");

@@ -3,6 +3,7 @@
 #include "cpu.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 
 // ADD WITH CARRY
 // Here we need to handle overflow cases and negative cases

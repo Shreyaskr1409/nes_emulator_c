@@ -16,18 +16,51 @@ void DrawCpu(int x, int y);
 void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns);
 
 int main() {
-    if (!CartInit(&cart, "./test/nestest.nes")) {
-        printf("Failed to find given rom file");
-        return 1;
-    }
-    printf("Cartridge loaded successfully");
-    BusInit(&bus, &cpu, &ppu);
-    BusInsertCartridge(&bus, &cart);
-    BusReset(&bus);
-
-    InitWindow(700, 480, "Nestest");
+    InitWindow(780, 480, "Nestest");
     SetTargetFPS(60);
 
+    // DEBUG: Check if file exists
+    printf("Attempting to load: ./test/nestest.nes\n");
+    FILE* test_file = fopen("./test/nestest.nes", "rb");
+    if (test_file) {
+        printf("File exists and is readable\n");
+        fclose(test_file);
+    } else {
+        printf("ERROR: Cannot open file ./test/nestest.nes\n");
+        perror("File error");
+        return 1;
+    }
+
+    // Try to load cartridge with more detailed error checking
+    printf("Initializing cartridge...\n");
+    if (!CartInit(&cart, "./test/nestest.nes")) {
+        printf("ERROR: CartInit failed!\n");
+        return 1;
+    }
+    printf("Cartridge loaded successfully\n");
+
+    // DEBUG: Check mapper initialization
+    printf("Checking mapper initialization...\n");
+    if (cart.pMapper.cpuMapRead == NULL) {
+        printf("ERROR: Mapper cpuMapRead is NULL!\n");
+        return 1;
+    }
+    if (cart.pMapper.cpuMapWrite == NULL) {
+        printf("ERROR: Mapper cpuMapWrite is NULL!\n");
+        return 1;
+    }
+    printf("Mapper initialized correctly\n");
+
+    printf("Initializing bus...\n");
+    BusInit(&bus, &cpu, &ppu);
+    
+    printf("Inserting cartridge into bus...\n");
+    BusInsertCartridge(&bus, &cart);
+    
+    printf("Resetting bus...\n");
+    BusReset(&bus);
+    
+    printf("Initialization complete!\n");
     while (!WindowShouldClose()) {
         HandleInput();
 
