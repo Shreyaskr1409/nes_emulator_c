@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+Mapper pMapper;
+
 bool CartInit(cartridge *cart, const char* sFileName) {
     cart->nMapperId = 0;
     cart->nPRGBanks = 0;
@@ -44,8 +46,14 @@ bool CartInit(cartridge *cart, const char* sFileName) {
             fclose(ifs);
             return false;
         }
-        fread(cart->vPRGMem, sizeof(uint8_t), cart->nPRGBanks, ifs);
+        fread(cart->vPRGMem, sizeof(uint8_t), cart->nPRGBanks*16384, ifs);
 
+        printf("First 256 bytes of PRG ROM:\n");
+        for (int i = 0; i < 256; i++) {
+            printf("%02X ", cart->vPRGMem[i]);
+            if (i == 7) printf(" ");
+        }
+        printf("\n");
 
         cart->nCHRBanks = cart->header.chr_rom_chunks;
         if (cart->nCHRBanks * 16384 > sizeof(cart->vCHRMem)) {
@@ -54,13 +62,19 @@ bool CartInit(cartridge *cart, const char* sFileName) {
             fclose(ifs);
             return false;
         }
-        fread(cart->vCHRMem, sizeof(uint8_t), cart->nCHRBanks, ifs);
+        fread(cart->vCHRMem, sizeof(uint8_t), cart->nCHRBanks*16384, ifs);
+
+        printf("First 256 bytes of CHR ROM:\n");
+        for (int i = 0; i < 256; i++) {
+            printf("%02X ", cart->vCHRMem[i]);
+            if (i == 7) printf(" ");
+        }
+        printf("\n");
     }
     if (nFileType == 2) {
         // TODO
     }
 
-    Mapper pMapper;
     switch (cart->nMapperId) {
         case 0:
             Mapper000Init(&pMapper, cart->nPRGBanks, cart->nCHRBanks);

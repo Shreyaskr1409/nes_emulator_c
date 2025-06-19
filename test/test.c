@@ -16,10 +16,10 @@ void DrawCpu(int x, int y);
 void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns);
 
 int main() {
-    InitWindow(780, 480, "Nestest");
+    const int scale = 3;
+    InitWindow(256 * scale + 300, 240 * scale, "Nestest");
     SetTargetFPS(60);
 
-    // DEBUG: Check if file exists
     printf("Attempting to load: ./test/nestest.nes\n");
     FILE* test_file = fopen("./test/nestest.nes", "rb");
     if (test_file) {
@@ -30,17 +30,11 @@ int main() {
         perror("File error");
         return 1;
     }
-
-    // Try to load cartridge with more detailed error checking
-    printf("Initializing cartridge...\n");
     if (!CartInit(&cart, "./test/nestest.nes")) {
         printf("ERROR: CartInit failed!\n");
         return 1;
     }
     printf("Cartridge loaded successfully\n");
-
-    // DEBUG: Check mapper initialization
-    printf("Checking mapper initialization...\n");
     if (cart.pMapper.cpuMapRead == NULL) {
         printf("ERROR: Mapper cpuMapRead is NULL!\n");
         return 1;
@@ -49,29 +43,38 @@ int main() {
         printf("ERROR: Mapper cpuMapWrite is NULL!\n");
         return 1;
     }
-    printf("Mapper initialized correctly\n");
-
-    printf("Initializing bus...\n");
     BusInit(&bus, &cpu, &ppu);
-    
-    printf("Inserting cartridge into bus...\n");
     BusInsertCartridge(&bus, &cart);
-    
-    printf("Resetting bus...\n");
     BusReset(&bus);
     
     printf("Initialization complete!\n");
+
+    const int nesScaledWidth = 256 * 3; // 768 pixels
+    const int debugPanelX = nesScaledWidth + 20; // 20px margin from NES display
+    const int debugStartY = 10; // Start debug info 10px from top
+    const int controlsStartY = 350; // Same relative position as before
+
     while (!WindowShouldClose()) {
         HandleInput();
 
         BeginDrawing();
 
         ClearBackground(BLACK);
-        DrawCpu(516, 2);
-        DrawText("SPACE = Run/Stop", 516, 350, 10, WHITE);;
-        DrawText("R = Reset", 516, 365, 10, WHITE);
-        DrawText("C = Step Instruction", 516, 380, 10, WHITE);
-        DrawText("F = Step Frame", 516, 395, 10, WHITE);
+
+        DrawTextureEx(
+                *ppu.texScreen,
+                (Vector2){0, 0},
+                0.0f,      // Rotation
+                3.0f,      // Scale
+                WHITE      // Tint
+                );
+
+        DrawCpu(debugPanelX, debugStartY);
+
+        DrawText("SPACE = Run/Stop", debugPanelX, controlsStartY, 15, WHITE);
+        DrawText("R = Reset", debugPanelX, controlsStartY + 20, 15, WHITE);
+        DrawText("C = Step Instruction", debugPanelX, controlsStartY + 40, 15, WHITE);
+        DrawText("F = Step Frame", debugPanelX, controlsStartY + 60, 15, WHITE);
 
         EndDrawing();
     }
@@ -110,7 +113,7 @@ void HandleInput() {
         if (IsKeyPressed(KEY_F)) {
             do {
                 BusClock(&bus);
-            } while (bus.ppu->frame_complete);
+            } while (!bus.ppu->frame_complete);
             do {
                 BusClock(&bus);
             } while (!CpuComplete(bus.cpu));
@@ -121,35 +124,74 @@ void HandleInput() {
 
 void DrawCpu(int x, int y) {
     char buffer[128];
+    const int scale = 3;         // Match your window scale factor
+    const int fontSize = 15;     // Slightly larger than 10*scale/2 for better readability
+    const int lineHeight = 20;   // Increased line spacing for scaled display
+    const int flagSpacing = 20;  // Spacing between status flags
     
-    // STATUS flags
-    DrawText("STATUS:", x, y, 10, WHITE);
-    DrawText("N", x + 64, y, 10, (bus.cpu->status & N) ? GREEN : RED);
-    DrawText("V", x + 80, y, 10, (bus.cpu->status & V) ? GREEN : RED);
-    DrawText("-", x + 96, y, 10, (bus.cpu->status & U) ? GREEN : RED);
-    DrawText("B", x + 112, y, 10, (bus.cpu->status & B) ? GREEN : RED);
-    DrawText("D", x + 128, y, 10, (bus.cpu->status & D) ? GREEN : RED);
-    DrawText("I", x + 144, y, 10, (bus.cpu->status & I) ? GREEN : RED);
-    DrawText("Z", x + 160, y, 10, (bus.cpu->status & Z) ? GREEN : RED);
-    DrawText("C", x + 178, y, 10, (bus.cpu->status & C) ? GREEN : RED);
+    // STATUS header and flags
+    DrawText("STATUS:", x, y, fontSize, WHITE);
     
-    // Registers
+    // Draw each flag with consistent spacing
+    int flagX = x + 80;
+    DrawText("N", flagX, y, fontSize, (bus.cpu->status & N) ? GREEN : RED);
+    DrawText("V", flagX + flagSpacing, y, fontSize, (bus.cpu->status & V) ? GREEN : RED);
+    DrawText("-", flagX + flagSpacing*2, y, fontSize, (bus.cpu->status & U) ? GREEN : RED);
+    DrawText("B", flagX + flagSpacing*3, y, fontSize, (bus.cpu->status & B) ? GREEN : RED);
+    DrawText("D", flagX + flagSpacing*4, y, fontSize, (bus.cpu->status & D) ? GREEN : RED);
+    DrawText("I", flagX + flagSpacing*5, y, fontSize, (bus.cpu->status & I) ? GREEN : RED);
+    DrawText("Z", flagX + flagSpacing*6, y, fontSize, (bus.cpu->status & Z) ? GREEN : RED);
+    DrawText("C", flagX + flagSpacing*7, y, fontSize, (bus.cpu->status & C) ? GREEN : RED);
+    
+    // Registers with proper spacing
+    int regY = y + lineHeight;
     snprintf(buffer, sizeof(buffer), "PC: $%04X", bus.cpu->pc);
-    DrawText(buffer, x, y + 12, 10, WHITE);
+    DrawText(buffer, x, regY, fontSize, WHITE);
     
     snprintf(buffer, sizeof(buffer), "A: $%02X [%d]", bus.cpu->a, bus.cpu->a);
-    DrawText(buffer, x, y + 24, 10, WHITE);
+    DrawText(buffer, x, regY + lineHeight, fontSize, WHITE);
     
     snprintf(buffer, sizeof(buffer), "X: $%02X [%d]", bus.cpu->x, bus.cpu->x);
-    DrawText(buffer, x, y + 36, 10, WHITE);
+    DrawText(buffer, x, regY + lineHeight*2, fontSize, WHITE);
     
     snprintf(buffer, sizeof(buffer), "Y: $%02X [%d]", bus.cpu->y, bus.cpu->y);
-    DrawText(buffer, x, y + 48, 10, WHITE);
+    DrawText(buffer, x, regY + lineHeight*3, fontSize, WHITE);
     
     snprintf(buffer, sizeof(buffer), "Stack P: $%04X", bus.cpu->stkp);
-    DrawText(buffer, x, y + 60, 10, WHITE);
+    DrawText(buffer, x, regY + lineHeight*4, fontSize, WHITE);
 }
 
+// void DrawCpu(int x, int y) {
+//     char buffer[128];
+//
+//     // STATUS flags
+//     DrawText("STATUS:", x, y, 10, WHITE);
+//     DrawText("N", x + 64, y, 10, (bus.cpu->status & N) ? GREEN : RED);
+//     DrawText("V", x + 80, y, 10, (bus.cpu->status & V) ? GREEN : RED);
+//     DrawText("-", x + 96, y, 10, (bus.cpu->status & U) ? GREEN : RED);
+//     DrawText("B", x + 112, y, 10, (bus.cpu->status & B) ? GREEN : RED);
+//     DrawText("D", x + 128, y, 10, (bus.cpu->status & D) ? GREEN : RED);
+//     DrawText("I", x + 144, y, 10, (bus.cpu->status & I) ? GREEN : RED);
+//     DrawText("Z", x + 160, y, 10, (bus.cpu->status & Z) ? GREEN : RED);
+//     DrawText("C", x + 178, y, 10, (bus.cpu->status & C) ? GREEN : RED);
+//
+//     // Registers
+//     snprintf(buffer, sizeof(buffer), "PC: $%04X", bus.cpu->pc);
+//     DrawText(buffer, x, y + 12, 10, WHITE);
+//
+//     snprintf(buffer, sizeof(buffer), "A: $%02X [%d]", bus.cpu->a, bus.cpu->a);
+//     DrawText(buffer, x, y + 24, 10, WHITE);
+//
+//     snprintf(buffer, sizeof(buffer), "X: $%02X [%d]", bus.cpu->x, bus.cpu->x);
+//     DrawText(buffer, x, y + 36, 10, WHITE);
+//
+//     snprintf(buffer, sizeof(buffer), "Y: $%02X [%d]", bus.cpu->y, bus.cpu->y);
+//     DrawText(buffer, x, y + 48, 10, WHITE);
+//
+//     snprintf(buffer, sizeof(buffer), "Stack P: $%04X", bus.cpu->stkp);
+//     DrawText(buffer, x, y + 60, 10, WHITE);
+// }
+//
 
 void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns) {
     int nRamX = x, nRamY = y;

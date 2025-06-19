@@ -139,13 +139,12 @@ void CpuClock(cpu6502 *cpu) {
     if (cpu->cycles == 0) {
         cpu->opcode = CpuReadFromBus(cpu, cpu->pc);
 
-        // DEBUG: Print information before the crash
-        printf("----------------------------------------\n");
-        printf("PC: 0x%04X, Opcode: 0x%02X, Cycles: %d\n", 
-               cpu->pc, cpu->opcode, cpu->lookup[cpu->opcode].cycles);
-        printf("Addrmode ptr: %p, Operate ptr: %p\n", 
-               (void*)cpu->lookup[cpu->opcode].addrmode, 
-               (void*)cpu->lookup[cpu->opcode].operate);
+        // printf("----------------------------------------\n");
+        // printf("PC: 0x%04X, Opcode: 0x%02X, Cycles: %d\n", 
+        //        cpu->pc, cpu->opcode, cpu->lookup[cpu->opcode].cycles);
+        // printf("Addrmode ptr: %p, Operate ptr: %p\n", 
+        //        (void*)cpu->lookup[cpu->opcode].addrmode, 
+        //        (void*)cpu->lookup[cpu->opcode].operate);
 
         cpu->pc++;
 

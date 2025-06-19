@@ -17,7 +17,6 @@ uint8_t IMP(cpu6502 *cpu) {
 // This means that the data is provided immediately after the Operation's
 // bit representation.
 uint8_t IMM(cpu6502 *cpu) {
-    printf("IMM running\n");
     // data is in the program counter
     cpu->addr_abs = cpu->pc;
     cpu->pc++;

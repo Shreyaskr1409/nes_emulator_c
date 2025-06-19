@@ -219,24 +219,19 @@ void PpuConnectCartridge(ppu2C02 *ppu, cartridge *cart) {
 }
 
 void PpuClock(ppu2C02* ppu) {
-    // Fake some noise for the screen
     int x = ppu->cycle - 1;
     int y = ppu->scanline;
     
-    // Only draw to screen if within visible area
     if (x >= 0 && x < 256 && y >= 0 && y < 240) {
-        // Choose between two colors (0x3F or 0x30) randomly
-        Color pixel_color = (GetRandomValue(0, 1)) ? 
-            GetColor(0x3F3F3FFF) :  // Dark gray
-            GetColor(0x303030FF);   // Slightly darker gray
-        
-        // Draw pixel directly to screen or to a render texture
-        // Note: In a real emulator, you'd want to buffer this to a texture
-        // and render once per frame for performance
-        DrawPixel(x, y, pixel_color);
+        // Write to buffer instead of drawing
+        int idx = (y * 256 + x) * 4;
+        ppu->frameBuffer[idx] = GetRandomValue(0, 1) ? 0xFF : 0x30; // R
+        ppu->frameBuffer[idx+1] = ppu->frameBuffer[idx]; // G
+        ppu->frameBuffer[idx+2] = ppu->frameBuffer[idx]; // B
+        ppu->frameBuffer[idx+3] = 0xFF; // A
     }
 
-    // Advance renderer timing
+    // Timing logic (unchanged)
     ppu->cycle++;
     if (ppu->cycle >= 341) {
         ppu->cycle = 0;

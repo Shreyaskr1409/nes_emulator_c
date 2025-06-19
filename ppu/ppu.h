@@ -20,6 +20,8 @@ typedef struct ppu2C02 {
     Texture2D *texNameTable[2];
     Texture2D *texPatternTable[2];
 
+    uint8_t frameBuffer[256 * 240 * 4]; // 32-bit RGBA
+
     bool frame_complete;
 
     int16_t scanline;

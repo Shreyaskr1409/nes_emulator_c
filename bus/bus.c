@@ -1,5 +1,6 @@
 #include "bus.h"
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 // simply a clock function
@@ -64,4 +65,5 @@ void BusClock(Bus *bus) {
         CpuClock(bus->cpu);
     }
     nSysClkCounter++;
+    UpdateTexture(*bus->ppu->texScreen, bus->ppu->frameBuffer);
 }
