@@ -12,7 +12,6 @@ bool bEmulationRun = false;
 float fResidualTime = 0.0f;
 
 int main() {
-
     if (!CartInit(&cart, "./test/nestest.nes")) {
         printf("Failed to find given rom file");
         return 1;
