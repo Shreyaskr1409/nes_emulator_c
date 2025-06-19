@@ -1,6 +1,5 @@
 #include "bus.h"
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
 // simply a clock function

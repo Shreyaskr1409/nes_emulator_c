@@ -239,6 +239,7 @@ void PpuClock(ppu2C02* ppu) {
         if (ppu->scanline >= 261) {
             ppu->scanline = -1;
             ppu->frame_complete = true;
+            UpdateTexture(*ppu->texScreen, ppu->frameBuffer);
         }
     }
 }

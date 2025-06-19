@@ -161,38 +161,6 @@ void DrawCpu(int x, int y) {
     DrawText(buffer, x, regY + lineHeight*4, fontSize, WHITE);
 }
 
-// void DrawCpu(int x, int y) {
-//     char buffer[128];
-//
-//     // STATUS flags
-//     DrawText("STATUS:", x, y, 10, WHITE);
-//     DrawText("N", x + 64, y, 10, (bus.cpu->status & N) ? GREEN : RED);
-//     DrawText("V", x + 80, y, 10, (bus.cpu->status & V) ? GREEN : RED);
-//     DrawText("-", x + 96, y, 10, (bus.cpu->status & U) ? GREEN : RED);
-//     DrawText("B", x + 112, y, 10, (bus.cpu->status & B) ? GREEN : RED);
-//     DrawText("D", x + 128, y, 10, (bus.cpu->status & D) ? GREEN : RED);
-//     DrawText("I", x + 144, y, 10, (bus.cpu->status & I) ? GREEN : RED);
-//     DrawText("Z", x + 160, y, 10, (bus.cpu->status & Z) ? GREEN : RED);
-//     DrawText("C", x + 178, y, 10, (bus.cpu->status & C) ? GREEN : RED);
-//
-//     // Registers
-//     snprintf(buffer, sizeof(buffer), "PC: $%04X", bus.cpu->pc);
-//     DrawText(buffer, x, y + 12, 10, WHITE);
-//
-//     snprintf(buffer, sizeof(buffer), "A: $%02X [%d]", bus.cpu->a, bus.cpu->a);
-//     DrawText(buffer, x, y + 24, 10, WHITE);
-//
-//     snprintf(buffer, sizeof(buffer), "X: $%02X [%d]", bus.cpu->x, bus.cpu->x);
-//     DrawText(buffer, x, y + 36, 10, WHITE);
-//
-//     snprintf(buffer, sizeof(buffer), "Y: $%02X [%d]", bus.cpu->y, bus.cpu->y);
-//     DrawText(buffer, x, y + 48, 10, WHITE);
-//
-//     snprintf(buffer, sizeof(buffer), "Stack P: $%04X", bus.cpu->stkp);
-//     DrawText(buffer, x, y + 60, 10, WHITE);
-// }
-//
-
 void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns) {
     int nRamX = x, nRamY = y;
     char buffer[64];
