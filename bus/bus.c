@@ -9,11 +9,14 @@ void BusInit(Bus *bus, cpu6502 *cpu, ppu2C02 *ppu) {
     bus->cpu = cpu;
     bus->ppu = ppu;
     CpuInit(bus->cpu);
+    PpuInit(bus->ppu);
     CpuConnectBus(bus->cpu, bus);
     memset(bus->cpuRam, 0x00, CPU_RAM_SIZE);
 }
 
-void BusDestroy(Bus *bus) {}
+void BusDestroy(Bus *bus) {
+    PpuDestroy(bus->ppu);
+}
 
 void BusWrite(Bus *bus, uint16_t addr, uint8_t data) {
 
@@ -47,9 +50,18 @@ uint8_t BusRead(Bus *bus, uint16_t addr, bool bReadOnly) {
 
 void BusReset(Bus *bus) {
     CpuReset(bus->cpu);
+    bus->nSystemClockCounter = 0;
 }
 
 void BusInsertCartridge(Bus *bus, cartridge *cart) {
     bus->cart = cart;
     PpuConnectCartridge(bus->ppu, cart);
+}
+
+void BusClock(Bus *bus) {
+    PpuClock(bus->ppu);
+    if (bus->nSystemClockCounter % 3 == 0) {
+        CpuClock(bus->cpu);
+    }
+    nSysClkCounter++;
 }

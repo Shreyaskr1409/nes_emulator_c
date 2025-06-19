@@ -13,6 +13,7 @@ typedef struct Bus {
     cpu6502 *cpu;
     cartridge *cart;
     uint8_t cpuRam[CPU_RAM_SIZE];
+    uint32_t nSystemClockCounter;
 } Bus;
 
 void BusInit(Bus *bus, cpu6502 *cpu, ppu2C02 *ppu);
