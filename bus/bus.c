@@ -64,5 +64,4 @@ void BusClock(Bus *bus) {
         CpuClock(bus->cpu);
     }
     nSysClkCounter++;
-    UpdateTexture(*bus->ppu->texScreen, bus->ppu->frameBuffer);
 }

@@ -17,5 +17,5 @@ default:
 	./$(TARGET)
 
 test:
-	$(CC) test/test.c $(CFILES) $(CFLAGS_ALT) $(LDFLAGS) -o $(TARGET)
+	$(CC) test/test_2.c $(CFILES) $(CFLAGS_ALT) $(LDFLAGS) -o $(TARGET)
 	./$(TARGET)

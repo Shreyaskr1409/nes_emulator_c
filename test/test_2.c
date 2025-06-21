@@ -14,12 +14,56 @@ float fResidualTime = 0.0f;
 void HandleInput();
 void DrawCpu(int x, int y);
 void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns);
+int LoadROM();
 
 int main() {
     const int scale = 3;
     InitWindow(256 * scale + 300, 240 * scale, "Nestest");
     SetTargetFPS(60);
 
+    if (LoadROM() == 1) {
+        return 1;
+    }
+
+    const int nesScaledWidth = 256 * 3; // 768 pixels
+    const int debugPanelX = nesScaledWidth + 20; // 20px margin from NES display
+    const int debugStartY = 10; // Start debug info 10px from top
+    const int controlsStartY = 350; // Same relative position as before
+
+    while (!WindowShouldClose()) {
+        HandleInput();
+
+        BeginDrawing();
+
+        ClearBackground(BLACK);
+
+        DrawTextureEx(
+                *ppu.texScreen,
+                (Vector2){0, 0},
+                0.0f,      // Rotation
+                3.0f,      // Scale
+                WHITE      // Tint
+                );
+
+        DrawCpu(debugPanelX, debugStartY);
+        // DrawRam(2, 2, 0x0000, 16, 16);
+        // DrawRam(2, 182, 0x8000, 16, 16);
+
+        DrawText("SPACE = Run/Stop", debugPanelX, controlsStartY, 15, WHITE);
+        DrawText("R = Reset", debugPanelX, controlsStartY + 20, 15, WHITE);
+        DrawText("C = Step Instruction", debugPanelX, controlsStartY + 40, 15, WHITE);
+        DrawText("F = Step Frame", debugPanelX, controlsStartY + 60, 15, WHITE);
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+    BusDestroy(&bus);
+
+    return 0;
+}
+
+int LoadROM() {
     printf("Attempting to load: ./test/nestest.nes\n");
     FILE* test_file = fopen("./test/nestest.nes", "rb");
     if (test_file) {
@@ -45,43 +89,11 @@ int main() {
     }
     BusInit(&bus, &cpu, &ppu);
     BusInsertCartridge(&bus, &cart);
+
+    disassemble(bus.cpu, 0x0000, 0xFFFF);
     BusReset(&bus);
     
     printf("Initialization complete!\n");
-
-    const int nesScaledWidth = 256 * 3; // 768 pixels
-    const int debugPanelX = nesScaledWidth + 20; // 20px margin from NES display
-    const int debugStartY = 10; // Start debug info 10px from top
-    const int controlsStartY = 350; // Same relative position as before
-
-    while (!WindowShouldClose()) {
-        HandleInput();
-
-        BeginDrawing();
-
-        ClearBackground(BLACK);
-
-        DrawTextureEx(
-                *ppu.texScreen,
-                (Vector2){0, 0},
-                0.0f,      // Rotation
-                3.0f,      // Scale
-                WHITE      // Tint
-                );
-
-        DrawCpu(debugPanelX, debugStartY);
-
-        DrawText("SPACE = Run/Stop", debugPanelX, controlsStartY, 15, WHITE);
-        DrawText("R = Reset", debugPanelX, controlsStartY + 20, 15, WHITE);
-        DrawText("C = Step Instruction", debugPanelX, controlsStartY + 40, 15, WHITE);
-        DrawText("F = Step Frame", debugPanelX, controlsStartY + 60, 15, WHITE);
-
-        EndDrawing();
-    }
-
-    CloseWindow();
-    BusDestroy(&bus);
-
     return 0;
 }
 
@@ -120,6 +132,7 @@ void HandleInput() {
             bus.ppu->frame_complete = false;
         }
     }
+    UpdateTexture(*bus.ppu->texScreen, bus.ppu->frameBuffer);
 }
 
 void DrawCpu(int x, int y) {
