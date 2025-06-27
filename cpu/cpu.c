@@ -214,6 +214,7 @@ hmap_uint16_str disassemble(cpu6502 *cpu, uint16_t nStart, uint16_t nStop) {
                                                         // X is hexadecimal in uppercase
         // read instruction and get its readable name
         uint8_t opcode = CpuReadFromBus(cpu, addr);
+        addr++;
         cstr_append_fmt(&sInst, "%s ", cpu->lookup[opcode].name);
 
         if (cpu->lookup[opcode].addrmode == IMP) {

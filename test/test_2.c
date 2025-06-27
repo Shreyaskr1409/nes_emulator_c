@@ -101,9 +101,9 @@ int LoadROM() {
     mapAsm = disassemble(bus.cpu, 0x0000, 0xFFFF);
     BusReset(&bus);
 
-    for (int i = 0; i < 10; i++) {
-        printf("Op %02X: %s\n", i, cpu.lookup[i].name);
-    }
+    // for (int i = 0; i < 10; i++) {
+    //     printf("Op %02X: %s\n", i, cpu.lookup[i].name);
+    // }
     
     // for (uint16_t addr = 0xC000; addr < 0xC010; addr++) {
     //     printf("%04X: %02X\n", addr, CpuReadFromBus(&cpu, addr));
