@@ -1,7 +1,11 @@
 #include <raylib.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "../bus/bus.h"
 #include "../cartridge/cartridge.h"
+#include "stc/cstr.h"
 
 Bus bus;
 cartridge cart;
@@ -10,10 +14,12 @@ ppu2C02 ppu;
 
 bool bEmulationRun = false;
 float fResidualTime = 0.0f;
+hmap_uint16_str mapAsm;
 
 void HandleInput();
 void DrawCpu(int x, int y);
 void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns);
+void DrawCode(int x, int y, int nLines, hmap_uint16_str* mapAsm, cpu6502* cpu);
 int LoadROM();
 
 int main() {
@@ -28,8 +34,8 @@ int main() {
     const int nesScaledWidth = 256 * 3; // 768 pixels
     const int debugPanelX = nesScaledWidth + 20; // 20px margin from NES display
     const int debugStartY = 10; // Start debug info 10px from top
-    const int controlsStartY = 350; // Same relative position as before
-
+    const int controlsStartY = 600; // Same relative position as before
+    
     while (!WindowShouldClose()) {
         HandleInput();
 
@@ -44,8 +50,9 @@ int main() {
         //         3.0f,      // Scale
         //         WHITE      // Tint
         //         );
-        //
+
         DrawCpu(debugPanelX, debugStartY);
+        DrawCode(debugPanelX, 150, 10, &mapAsm, &cpu);
         DrawRam(10, 10, 0x0000, 16, 16);
         DrawRam(10, 120*3, 0x8000, 16, 16);
 
@@ -90,8 +97,17 @@ int LoadROM() {
     BusInit(&bus, &cpu, &ppu);
     BusInsertCartridge(&bus, &cart);
 
-    disassemble(bus.cpu, 0x0000, 0xFFFF);
+    printf("Disassembling...\n");
+    mapAsm = disassemble(bus.cpu, 0x0000, 0xFFFF);
     BusReset(&bus);
+
+    // for (int i = 0; i < 10; i++) {
+    //     printf("Op %02X: %s\n", i, cpu.lookup[i].name);
+    // }
+    
+    // for (uint16_t addr = 0xC000; addr < 0xC010; addr++) {
+    //     printf("%04X: %02X\n", addr, CpuReadFromBus(&cpu, addr));
+    // }
     
     printf("Initialization complete!\n");
     return 0;
@@ -138,7 +154,7 @@ void HandleInput() {
 void DrawCpu(int x, int y) {
     char buffer[128];
     const int scale = 3;         // Match your window scale factor
-    const int fontSize = 18;     // Slightly larger than 10*scale/2 for better readability
+    const int fontSize = 15;     // Slightly larger than 10*scale/2 for better readability
     const int lineHeight = 20;   // Increased line spacing for scaled display
     const int flagSpacing = 20;  // Spacing between status flags
     
@@ -198,3 +214,49 @@ void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns) {
         nRamY += lineHeight;
     }
 }
+
+void DrawCode(int x, int y, int nLines, hmap_uint16_str* mapAsm, cpu6502* cpu) {
+    const int fontSize = 15;
+    const int lineHeight = 20;
+    const uint16_t max_addr = 0xFFFF;
+    
+    // Center PC line
+    int centerY = y + (nLines >> 1) * lineHeight;
+    
+    // Draw PC line (highlighted)
+    hmap_uint16_str_iter pc_it = hmap_uint16_str_find(mapAsm, cpu->pc);
+    if (pc_it.ref != NULL) {
+        DrawText(cstr_str(&pc_it.ref->second), x, centerY, fontSize, GREEN);
+    }
+
+    // Draw lines after PC
+    int linesDrawn = 1;
+    uint16_t next_addr = cpu->pc + 1;
+    int nextY = centerY + lineHeight;
+    
+    while (linesDrawn < nLines && next_addr <= max_addr) {
+        hmap_uint16_str_iter it = hmap_uint16_str_find(mapAsm, next_addr);
+        if (it.ref != NULL) {
+            DrawText(cstr_str(&it.ref->second), x, nextY, fontSize, WHITE);
+            nextY += lineHeight;
+            linesDrawn++;
+        }
+        next_addr++;
+    }
+
+    // Draw lines before PC
+    uint16_t prev_addr = cpu->pc - 1;
+    int prevY = centerY - lineHeight;
+    linesDrawn = 1; // Reset counter
+    
+    while (linesDrawn <= (nLines >> 1) && prev_addr <= max_addr) { // prev_addr will wrap around if < 0
+        hmap_uint16_str_iter it = hmap_uint16_str_find(mapAsm, prev_addr);
+        if (it.ref != NULL) {
+            DrawText(cstr_str(&it.ref->second), x, prevY, fontSize, GRAY);
+            prevY -= lineHeight;
+            linesDrawn++;
+        }
+        prev_addr--;
+    }
+}
+
