@@ -37,7 +37,7 @@ void CpuInit(cpu6502 *cpu) {
     cpu->x = 0x00;
     cpu->y = 0x00;
     cpu->stkp = 0x00;
-    cpu->pc = 0x00;
+    cpu->pc = 0x0000;
     cpu->status = 0x00;
 
     cpu->fetched = 0x00;
@@ -59,7 +59,6 @@ void CpuWriteToCpuBus(cpu6502 *cpu, uint16_t addr, uint8_t data) {
     BusWrite(cpu->bus, addr, data);
 }
 uint8_t CpuFetchFromBus(cpu6502 *cpu) {
-    // this will fetch
     if (!(cpu->lookup[cpu->opcode].addrmode == &IMP)) {
         cpu->fetched = CpuReadFromBus(cpu, cpu->addr_abs);
     }
@@ -210,55 +209,55 @@ hmap_uint16_str disassemble(cpu6502 *cpu, uint16_t nStart, uint16_t nStop) {
 
     while (addr <= (uint32_t)nStop) {
         line_addr = addr;
-        cstr sInst = cstr_from_fmt("$%0*X: ", addr, 4); // 0 is the padding of 0
+        cstr sInst = cstr_from_fmt("$%0*X: ", 4, addr); // 0 is the padding of 0
                                                         // * takes the width from argument list
                                                         // X is hexadecimal in uppercase
         // read instruction and get its readable name
         uint8_t opcode = CpuReadFromBus(cpu, addr);
-        cstr_append_fmt(&sInst, "%s ", cpu->lookup[cpu->opcode].name);
+        cstr_append_fmt(&sInst, "%s ", cpu->lookup[opcode].name);
 
-        if (cpu->lookup[cpu->opcode].addrmode == IMP) {
+        if (cpu->lookup[opcode].addrmode == IMP) {
             cstr_append_fmt(&sInst, " {IMP}");
-        } else if (cpu->lookup[cpu->opcode].addrmode == IMM) {
+        } else if (cpu->lookup[opcode].addrmode == IMM) {
             value = CpuReadFromBus(cpu, addr); addr++;
             cstr_append_fmt(&sInst, "#$%02X {IMM}", value);
-        } else if (cpu->lookup[cpu->opcode].addrmode == ZP0) {
+        } else if (cpu->lookup[opcode].addrmode == ZP0) {
             lo = CpuReadFromBus(cpu, addr); addr++;
             hi = 0x00;
             cstr_append_fmt(&sInst, "$%02X {ZP0}", lo);
-        } else if (cpu->lookup[cpu->opcode].addrmode == ZPX) {
+        } else if (cpu->lookup[opcode].addrmode == ZPX) {
             lo = CpuReadFromBus(cpu, addr); addr++;
             hi = 0x00;
             cstr_append_fmt(&sInst, "$%02X, X {ZPX}", lo);
-        } else if (cpu->lookup[cpu->opcode].addrmode == ZPY) {
+        } else if (cpu->lookup[opcode].addrmode == ZPY) {
             lo = CpuReadFromBus(cpu, addr); addr++;
             hi = 0x00;
             cstr_append_fmt(&sInst, "$%02X, Y {ZPY}", lo);
-        } else if (cpu->lookup[cpu->opcode].addrmode == IZX) {
+        } else if (cpu->lookup[opcode].addrmode == IZX) {
             lo = CpuReadFromBus(cpu, addr); addr++;
             hi = 0x00;
             cstr_append_fmt(&sInst, "($%02X, X) {IZX}", lo);
-        } else if (cpu->lookup[cpu->opcode].addrmode == IZY) {
+        } else if (cpu->lookup[opcode].addrmode == IZY) {
             lo = CpuReadFromBus(cpu, addr); addr++;
             hi = 0x00;
             cstr_append_fmt(&sInst, "($%02X), Y {IZY}", lo);
-        } else if (cpu->lookup[cpu->opcode].addrmode == ABS) {
+        } else if (cpu->lookup[opcode].addrmode == ABS) {
             lo = CpuReadFromBus(cpu, addr); addr++;
             hi = CpuReadFromBus(cpu, addr); addr++;
             cstr_append_fmt(&sInst, "$%04X {ABS}", (uint16_t)(hi << 8) | lo);
-        } else if (cpu->lookup[cpu->opcode].addrmode == ABX) {
+        } else if (cpu->lookup[opcode].addrmode == ABX) {
             lo = CpuReadFromBus(cpu, addr); addr++;
             hi = CpuReadFromBus(cpu, addr); addr++;
             cstr_append_fmt(&sInst, "$%04X, X {ABX}", (uint16_t)(hi << 8) | lo);
-        } else if (cpu->lookup[cpu->opcode].addrmode == ABY) {
+        } else if (cpu->lookup[opcode].addrmode == ABY) {
             lo = CpuReadFromBus(cpu, addr); addr++;
             hi = CpuReadFromBus(cpu, addr); addr++;
             cstr_append_fmt(&sInst, "$%04X, Y {ABY}", (uint16_t)(hi << 8) | lo);
-        } else if (cpu->lookup[cpu->opcode].addrmode == IND) {
+        } else if (cpu->lookup[opcode].addrmode == IND) {
             lo = CpuReadFromBus(cpu, addr); addr++;
             hi = CpuReadFromBus(cpu, addr); addr++;
             cstr_append_fmt(&sInst, "($%04X) {IND}", (uint16_t)(hi << 8) | lo);
-        } else if (cpu->lookup[cpu->opcode].addrmode == REL) {
+        } else if (cpu->lookup[opcode].addrmode == REL) {
             value = CpuReadFromBus(cpu, addr); addr++;
             cstr_append_fmt(&sInst, "$%02X [$%04X] {REL}", value, addr + (int8_t)value);
         }

@@ -16,8 +16,8 @@ typedef struct cpu6502 {
     uint8_t x;
     uint8_t y;
     uint8_t stkp;
-    uint8_t pc;
     uint8_t status;
+    uint16_t pc;
 
     uint8_t fetched;
     uint16_t temp;

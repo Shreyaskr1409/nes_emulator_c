@@ -37,17 +37,17 @@ int main() {
 
         ClearBackground(BLACK);
 
-        DrawTextureEx(
-                *ppu.texScreen,
-                (Vector2){0, 0},
-                0.0f,      // Rotation
-                3.0f,      // Scale
-                WHITE      // Tint
-                );
-
+        // DrawTextureEx(
+        //         *ppu.texScreen,
+        //         (Vector2){0, 0},
+        //         0.0f,      // Rotation
+        //         3.0f,      // Scale
+        //         WHITE      // Tint
+        //         );
+        //
         DrawCpu(debugPanelX, debugStartY);
-        // DrawRam(2, 2, 0x0000, 16, 16);
-        // DrawRam(2, 182, 0x8000, 16, 16);
+        DrawRam(10, 10, 0x0000, 16, 16);
+        DrawRam(10, 120*3, 0x8000, 16, 16);
 
         DrawText("SPACE = Run/Stop", debugPanelX, controlsStartY, 15, WHITE);
         DrawText("R = Reset", debugPanelX, controlsStartY + 20, 15, WHITE);
@@ -138,7 +138,7 @@ void HandleInput() {
 void DrawCpu(int x, int y) {
     char buffer[128];
     const int scale = 3;         // Match your window scale factor
-    const int fontSize = 15;     // Slightly larger than 10*scale/2 for better readability
+    const int fontSize = 18;     // Slightly larger than 10*scale/2 for better readability
     const int lineHeight = 20;   // Increased line spacing for scaled display
     const int flagSpacing = 20;  // Spacing between status flags
     
@@ -177,6 +177,9 @@ void DrawCpu(int x, int y) {
 void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns) {
     int nRamX = x, nRamY = y;
     char buffer[64];
+    const int scale = 3;         // Match your window scale factor
+    const int fontSize = 18;     // Slightly larger than 10*scale/2 for better readability
+    const int lineHeight = 20;   // Increased line spacing for scaled display
     
     for (int row = 0; row < nRows; row++) {
         snprintf(buffer, sizeof(buffer), "$%04X:", nAddr);
@@ -191,7 +194,7 @@ void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns) {
             nAddr += 1;
         }
         
-        DrawText(buffer, nRamX, nRamY, 10, WHITE);
-        nRamY += 12;
+        DrawText(buffer, nRamX, nRamY, fontSize, WHITE);
+        nRamY += lineHeight;
     }
 }

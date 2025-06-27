@@ -113,7 +113,7 @@ bool CartWriteToCpuBus(cartridge *cart, uint16_t addr, uint8_t data) {
 
 bool CartReadFromPpuBus(cartridge *cart, uint16_t addr, uint8_t *data) {
     uint32_t mapped_addr = 0;
-    if (cart->pMapper.ppuMapWrite(&cart->pMapper, addr, &mapped_addr)) {
+    if (cart->pMapper.ppuMapRead(&cart->pMapper, addr, &mapped_addr)) {
         *data = cart->vCHRMem[mapped_addr];
         return true;
     }
@@ -122,7 +122,7 @@ bool CartReadFromPpuBus(cartridge *cart, uint16_t addr, uint8_t *data) {
 
 bool CartWriteToPpuBus(cartridge *cart, uint16_t addr, uint8_t data) {
     uint32_t mapped_addr = 0;
-    if (cart->pMapper.ppuMapWrite(&cart->pMapper, addr, &mapped_addr)) {
+    if (cart->pMapper.ppuMapRead(&cart->pMapper, addr, &mapped_addr)) {
         cart->vCHRMem[mapped_addr] = data;
         return true;
     }

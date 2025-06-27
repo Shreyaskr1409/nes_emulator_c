@@ -45,7 +45,7 @@ uint8_t BusRead(Bus *bus, uint16_t addr, bool bReadOnly) {
         data = PpuReadFromCpuBus(bus->ppu, addr & 0x0007, false);
     }
 
-    return 0x00;
+    return data;
 }
 
 void BusReset(Bus *bus) {

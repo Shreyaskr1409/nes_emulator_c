@@ -16,6 +16,10 @@ default:
 	$(CC) main.c $(CFLAGS) $(LDFLAGS) -o $(TARGET)
 	./$(TARGET)
 
-test:
+test-1:
+	$(CC) test/test_1.c $(CFILES) $(CFLAGS_ALT) $(LDFLAGS) -o $(TARGET)
+	./$(TARGET)
+
+test-2:
 	$(CC) test/test_2.c $(CFILES) $(CFLAGS_ALT) $(LDFLAGS) -o $(TARGET)
 	./$(TARGET)
