@@ -411,7 +411,7 @@ uint8_t PLA(cpu6502 *cpu) {
 // Pull status from stack
 uint8_t PLP(cpu6502 *cpu) {
     cpu->stkp++;
-    cpu->status = CpuReadFromBus(cpu, cpu->stkp);
+    cpu->status = CpuReadFromBus(cpu, 0x0100 + cpu->stkp);
     CpuSetFlag(cpu, U, true);
     return 0;
 }

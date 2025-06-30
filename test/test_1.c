@@ -100,6 +100,7 @@ int LoadROM() {
     printf("Disassembling...\n");
     mapAsm = disassemble(bus.cpu, 0x0000, 0xFFFF);
     BusReset(&bus);
+    cpu.pc = 0xC000;
 
     // for (int i = 0; i < 10; i++) {
     //     printf("Op %02X: %s\n", i, cpu.lookup[i].name);
@@ -197,6 +198,7 @@ void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns) {
     const int fontSize = 18;     // Slightly larger than 10*scale/2 for better readability
     const int lineHeight = 20;   // Increased line spacing for scaled display
     
+    // printf("=========================================\n");
     for (int row = 0; row < nRows; row++) {
         snprintf(buffer, sizeof(buffer), "$%04X:", nAddr);
         
@@ -211,6 +213,7 @@ void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns) {
         }
         
         DrawText(buffer, nRamX, nRamY, fontSize, WHITE);
+        // printf("%s\n", buffer);
         nRamY += lineHeight;
     }
 }

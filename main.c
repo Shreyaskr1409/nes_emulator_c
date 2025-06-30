@@ -1,6 +1,6 @@
 #include <stdio.h>
 
 int main() {
-    printf("Hello World");
+    printf("Main emulator UI yet to be built. Consider running tests");
     return 0;
 }
