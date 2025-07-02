@@ -6,12 +6,21 @@
 #include <raylib.h>
 
 typedef struct ppu2C02 {
-    uint8_t tblName[2][1024];
+    uint8_t tblName[2][1024]; // VRAM
     uint8_t tblPalette[32];
-    uint8_t tblPattern[2][4096]; // unused
+
+    // 1 half handles sprites and other half handles bg tiles in many cases
+    // each half consists of 16*16 tiles where each tile is 8*8 pixels
+    // each pixel takes up 2 bits (4 options for colors)
+    // the data for these pixels are laid out in the memory in 2 8*8 planes
+    // first plane holds the LSB and the other holds the MSB
+    // All we need to access these planes is location of the pixel in tile,
+    // then we can just lookup the LSB and add offset of 8 to find the MSB
+    uint8_t tblPattern[2][4096];
     cartridge* cart;
 
     Color palScreen[0x40];
+
     Image* imgScreen;
     Image* imgNameTable[2];
     Image* imgPatternTable[2];
@@ -20,7 +29,8 @@ typedef struct ppu2C02 {
     Texture2D *texNameTable[2];
     Texture2D *texPatternTable[2];
 
-    uint8_t frameBuffer[256 * 240 * 4]; // 32-bit RGBA
+    // Changed from 256*240*4 to 256*256*4 because last 16 rows are present, but hidden
+    uint8_t frameBuffer[256 * 256 * 4]; // 32-bit RGBA
 
     bool frame_complete;
 
@@ -33,7 +43,9 @@ void PpuDestroy(ppu2C02* ppu);
 
 Texture2D PpuGetScreen(ppu2C02* ppu);
 Texture2D PpuGetNameTable(ppu2C02* ppu, uint8_t i);
-Texture2D PpuGetPatternTable(ppu2C02* ppu, uint8_t i);
+Texture2D PpuGetPatternTable(ppu2C02* ppu, uint8_t i, uint8_t pattern);
+
+Color GetColorFromPaletteRam(ppu2C02* ppu, uint8_t palette, uint8_t pixel);
 
 void PpuDrawPixelScreen(ppu2C02* ppu, int x, int y, Color color);
 void PpuUpdateScreenTexture(ppu2C02* ppu);

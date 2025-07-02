@@ -111,16 +111,72 @@ Texture2D PpuGetNameTable(ppu2C02* ppu, uint8_t i) {
     return *ppu->texNameTable[i];
 }
 
-Texture2D PpuGetPatternTable(ppu2C02* ppu, uint8_t i) {
+Texture2D PpuGetPatternTable(ppu2C02* ppu, uint8_t i, uint8_t pattern) {
+    if (!ppu->imgPatternTable[i]) {
+        ppu->imgPatternTable[i] = (Image*)MemAlloc(sizeof(Image));
+        *ppu->imgPatternTable[i] = GenImageColor(128, 128, BLANK); // 16x16 tiles * 8 pixels = 128
+    }
+
+    for (uint16_t nTileY = 0; nTileY < 16; nTileY++) {
+        for (uint16_t nTileX = 0; nTileX < 16; nTileX++) {
+            // each column of tile takes up 16*(8*8)*2 bits of information, or 16*16 bytes
+            uint16_t nOffset = (nTileY * 256) + (nTileX * 16);
+
+            for (uint16_t nPixelY = 0; nPixelY < 8; nPixelY++) {
+
+                // X and Y in following explanations are equivalent to nPixelX and nPixelY
+                //
+                // treat the following like an equivalent of array of 'bits' of size 8
+                // where each bit tells lsb/msb of each pixel in the X axis of the array
+                // X axis because for each Y, we get a set of 8 bits for values for different X
+                uint8_t tile_lsb = PpuReadFromPpuBus(ppu, i*0x1000 + nOffset + (nPixelY+0), true);
+                uint8_t tile_msb = PpuReadFromPpuBus(ppu, i*0x1000 + nOffset + (nPixelY+8), true);
+
+                for (uint16_t nPixelX = 0; nPixelX < 8; nPixelX++) {
+                    // Choosing color from palette between 0 to 3
+                    uint8_t pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
+
+                    // Shifting bits so that we can get data for the next pixel
+                    tile_lsb >>= 1;
+                    tile_msb >>= 1;
+
+                    ImageDrawPixel(ppu->imgPatternTable[i],
+                            nTileX*8 + (7-nPixelX), // because the LSB (of variable) of vars: tile_lsb and tile_msb
+                                                    // represent the rightmost pixel in the row
+                            nTileY*8 + nPixelY,
+                            GetColorFromPaletteRam(ppu, 1, pixel));
+                }
+            }
+        }
+    }
+
+    if (!ppu->texPatternTable[i]) {
+        ppu->texPatternTable[i] = (Texture2D*)MemAlloc(sizeof(Texture2D));
+        *ppu->texPatternTable[i] = LoadTextureFromImage(*ppu->imgPatternTable[i]);
+    } else {
+        UpdateTexture(*ppu->texPatternTable[i], ppu->imgPatternTable[i]->data);
+    }
     return *ppu->texPatternTable[i];
 }
 
+Color GetColorFromPaletteRam(ppu2C02* ppu, uint8_t palette, uint8_t pixel) {
+    return ppu->palScreen[PpuReadFromPpuBus(ppu, 0x3F00 + (palette<<2) + pixel, true)];
+}
+
 void PpuDrawPixelScreen(ppu2C02* ppu, int x, int y, Color color) {
-        ImageDrawPixel(ppu->imgScreen, x, y, color);
+        DrawTextureEx(
+                *ppu->texScreen,
+                (Vector2){x, y},
+                0.0f,      // Rotation
+                3.0f,      // Scale
+                color      // Tint
+                );
+        // ImageDrawPixel(ppu->imgScreen, x, y, color);
 }
 
 void PpuUpdateScreenTexture(ppu2C02* ppu) {
-        UpdateTexture(*ppu->texScreen, ppu->imgScreen->data);
+        UpdateTexture(*ppu->texScreen, ppu->frameBuffer);
+        // UpdateTexture(*ppu->texScreen, ppu->imgScreen->data);
 }
 
 void PpuDestroy(ppu2C02* ppu)
@@ -207,11 +263,59 @@ uint8_t PpuReadFromPpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
     uint8_t data = 0x00;
     addr &= 0x3FFF;
 
+    if (CartReadFromPpuBus(ppu->cart, addr, &data)) {
+        
+    } else if (addr >= 0x0000 && addr <= 0x1FFF) {
+        // PATTERN MEMORY
+
+        // The first index is to determine if the data is in 1st 4kB or 2nd 4kB
+        // since the 1FFF is the max value, the index will only be 0 or 1
+        data = ppu->tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF];
+
+    } else if (addr >= 0x2000 && addr <= 0x3EFF) {
+        // NAMETABLE MEMORY
+    } else if (addr >= 0x3F00 && addr <= 0x3FFF) {
+        // PALETTE MEMORY
+        
+        addr &= 0x001F; // Index from palette memory can be obtained by masking it
+                        // for the last 5 bits
+        if (addr == 0x0010) addr = 0x0000;
+        if (addr == 0x0014) addr = 0x0004;
+        if (addr == 0x0018) addr = 0x0008;
+        if (addr == 0x001C) addr = 0x000C;
+
+        data = ppu->tblPalette[addr];
+    }
+
     return data;
 }
 
 void PpuWriteToPpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
     addr &= 0x3FFF;
+
+    if (CartWriteToPpuBus(ppu->cart, addr, data)) {
+        
+    } else if (addr >= 0x0000 && addr <= 0x1FFF) {
+        // PATTERN MEMORY
+
+        // The first index is to determine if the data is in 1st 4kB or 2nd 4kB
+        // since the 1FFF is the max value, the index will only be 0 or 1
+        ppu->tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF] = data;
+
+    } else if (addr >= 0x2000 && addr <= 0x3EFF) {
+        // NAMETABLE MEMORY
+    } else if (addr >= 0x3F00 && addr <= 0x3FFF) {
+        // PALETTE MEMORY
+        
+        addr &= 0x001F; // Index from palette memory can be obtained by masking it
+                        // for the last 5 bits
+        if (addr == 0x0010) addr = 0x0000;
+        if (addr == 0x0014) addr = 0x0004;
+        if (addr == 0x0018) addr = 0x0008;
+        if (addr == 0x001C) addr = 0x000C;
+
+        ppu->tblPalette[addr] = data;
+    }
 }
 
 void PpuConnectCartridge(ppu2C02 *ppu, cartridge *cart) {
