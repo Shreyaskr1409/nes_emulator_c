@@ -27,7 +27,7 @@ int LoadROM();
 
 int main() {
     const int scale = 3;
-    InitWindow(256 * scale + 300, 240 * scale, "Nestest");
+    InitWindow(256 * scale + 540, 240 * scale, "Nestest");
     SetTargetFPS(60);
 
     if (LoadROM() == 1) {
@@ -49,9 +49,9 @@ int main() {
         PpuDrawPixelScreen(&ppu, 0, 0, WHITE);
 
         DrawCpu(debugPanelX, debugStartY);
-        DrawCode(debugPanelX, 150, 10, &mapAsm, &cpu);
-        DrawColorPalette(debugPanelX, 500);
-        DrawPatternTable(debugPanelX, 510);
+        DrawCode(debugPanelX, 140, 10, &mapAsm, &cpu);
+        DrawColorPalette(debugPanelX, 450);
+        DrawPatternTable(debugPanelX, 460);
 
         EndDrawing();
     }
@@ -279,9 +279,9 @@ void DrawColorPalette(int x, int y) {
 void DrawPatternTable(int x, int y) {
     // Draw second pattern table (left)
     Texture2D patternTable0 = PpuGetPatternTable(&ppu, 0, nSelectedPalette);
-    DrawTextureEx(patternTable0, (Vector2){x, y}, 0.0f, 1.0f, WHITE);
+    DrawTextureEx(patternTable0, (Vector2){x, y}, 0.0f, 2.0f, WHITE);
     
     // Draw second pattern table (right)
     Texture2D patternTable1 = PpuGetPatternTable(&ppu, 1, nSelectedPalette);
-    DrawTextureEx(patternTable1, (Vector2){x+133, y}, 0.0f, 1.0f, WHITE);
+    DrawTextureEx(patternTable1, (Vector2){x+260, y}, 0.0f, 2.0f, WHITE);
 }

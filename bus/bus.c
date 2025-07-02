@@ -63,5 +63,11 @@ void BusClock(Bus *bus) {
     if (bus->nSystemClockCounter % 3 == 0) {
         CpuClock(bus->cpu);
     }
+
+    if (bus->ppu->nmi) {
+        bus->ppu->nmi = false;
+        CpuNMI(bus->cpu);
+    }
+
     nSysClkCounter++;
 }

@@ -5,6 +5,7 @@
 void PpuInit(ppu2C02 *ppu) {
     ppu->cycle = 0;
     ppu->scanline = 0;
+    ppu->nmi = false;
 
     ppu->palScreen[0x00] = (Color){84, 84, 84, 255};
     ppu->palScreen[0x01] = (Color){0, 30, 116, 255};
@@ -111,7 +112,7 @@ Texture2D PpuGetNameTable(ppu2C02* ppu, uint8_t i) {
     return *ppu->texNameTable[i];
 }
 
-Texture2D PpuGetPatternTable(ppu2C02* ppu, uint8_t i, uint8_t pattern) {
+Texture2D PpuGetPatternTable(ppu2C02* ppu, uint8_t i, uint8_t palette) {
     if (!ppu->imgPatternTable[i]) {
         ppu->imgPatternTable[i] = (Image*)MemAlloc(sizeof(Image));
         *ppu->imgPatternTable[i] = GenImageColor(128, 128, BLANK); // 16x16 tiles * 8 pixels = 128
@@ -144,7 +145,7 @@ Texture2D PpuGetPatternTable(ppu2C02* ppu, uint8_t i, uint8_t pattern) {
                             nTileX*8 + (7-nPixelX), // because the LSB (of variable) of vars: tile_lsb and tile_msb
                                                     // represent the rightmost pixel in the row
                             nTileY*8 + nPixelY,
-                            GetColorFromPaletteRam(ppu, 1, pixel));
+                            GetColorFromPaletteRam(ppu, palette, pixel));
                 }
             }
         }
@@ -221,6 +222,11 @@ uint8_t PpuReadFromCpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
         case 0x0001: // Mask
             break;
         case 0x0002: // Status
+            data = (ppu->status.reg & 0xE0) | (ppu->data_buffer & 0x1F); // by design,
+                     // in original NES, only the first 3 bits of status register are of interest
+                     // rest is filled with noise
+            ppu->status.bits.vertical_blank = 0;
+            ppu->address_latch = 0;
             break;
         case 0x0003: // OAM Address
             break;
@@ -231,6 +237,13 @@ uint8_t PpuReadFromCpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
         case 0x0006: // PPU Address
             break;
         case 0x0007: // PPU Data
+            data = ppu->data_buffer;
+            ppu->data_buffer = PpuReadFromPpuBus(ppu, ppu->addr, true);
+
+            if (ppu->addr >= 0x3F00) {
+                data = ppu->data_buffer;
+            }
+            ppu->addr++;
             break;
     }
 
@@ -241,8 +254,10 @@ void PpuWriteToCpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
     switch (addr)
     {
         case 0x0000: // Control
+            ppu->control.reg = data;
             break;
         case 0x0001: // Mask
+            ppu->mask.reg = data;
             break;
         case 0x0002: // Status
             break;
@@ -253,8 +268,17 @@ void PpuWriteToCpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
         case 0x0005: // Scroll
             break;
         case 0x0006: // PPU Address
+            if (ppu->address_latch == 0) {
+                ppu->addr = (ppu->addr & 0x00FF) | (data << 8); // clear upper bits and assign it
+                ppu->address_latch = 1;
+            } else {
+                ppu->addr = (ppu->addr & 0xFF00) | data; // clear lower bits and assign it
+                ppu->address_latch = 0;
+            }
             break;
         case 0x0007: // PPU Data
+            PpuWriteToPpuBus(ppu, ppu->addr, data);
+            ppu->addr++;
             break;
     }
 }
@@ -323,6 +347,17 @@ void PpuConnectCartridge(ppu2C02 *ppu, cartridge *cart) {
 }
 
 void PpuClock(ppu2C02* ppu) {
+    if (ppu->scanline == -1 && ppu->cycle == 1) {
+        ppu->status.bits.vertical_blank = 0;
+    }
+
+    if (ppu->scanline == 241 && ppu->cycle == 1) {
+        ppu->status.bits.vertical_blank = 1;
+        if (ppu->control.bits.enable_nmi) {
+            ppu->nmi = true;
+        }
+    }
+
     int x = ppu->cycle - 1;
     int y = ppu->scanline;
     
