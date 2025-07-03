@@ -46,7 +46,7 @@ uint8_t AND(cpu6502 *cpu) {
 
 uint8_t ASL(cpu6502 *cpu) {
     CpuFetchFromBus(cpu);
-    cpu->temp = cpu->fetched>>1;
+    cpu->temp = cpu->fetched<<1;
     CpuSetFlag(cpu, C, (cpu->temp & 0xFF00) > 0);
     CpuSetFlag(cpu, N, cpu->temp == 0x80);
     CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0x00);

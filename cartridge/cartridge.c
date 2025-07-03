@@ -32,6 +32,7 @@ bool CartInit(cartridge *cart, const char* sFileName) {
     }
 
     cart->nMapperId = ((cart->header.mapper2 >> 4) << 4) | (cart->header.mapper1 >> 4);
+    printf("The mapper ID is: %d\n", cart->nMapperId);
 
     uint8_t nFileType = 1;
     

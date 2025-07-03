@@ -50,7 +50,7 @@ int main() {
 
         DrawCpu(debugPanelX, debugStartY);
         DrawCode(debugPanelX, 140, 10, &mapAsm, &cpu);
-        DrawColorPalette(debugPanelX, 450);
+        DrawColorPalette(debugPanelX, 445);
         DrawPatternTable(debugPanelX, 460);
 
         EndDrawing();
@@ -63,17 +63,20 @@ int main() {
 }
 
 int LoadROM() {
-    printf("Attempting to load: ./test/nestest.nes\n");
-    FILE* test_file = fopen("./test/nestest.nes", "rb");
+    // const char* file_path = "./test/nestest.nes";
+    const char* file_path = "./test/game_roms/smb.nes";
+    // const char* file_path = "./test/game_roms/kung_fu.nes";
+    printf("Attempting to load: %s\n", file_path);
+    FILE* test_file = fopen(file_path, "rb");
     if (test_file) {
         printf("File exists and is readable\n");
         fclose(test_file);
     } else {
-        printf("ERROR: Cannot open file ./test/nestest.nes\n");
+        printf("ERROR: Cannot open file\n");
         perror("File error");
         return 1;
     }
-    if (!CartInit(&cart, "./test/nestest.nes")) {
+    if (!CartInit(&cart, file_path)) {
         printf("ERROR: CartInit failed!\n");
         return 1;
     }
@@ -249,7 +252,7 @@ void DrawCode(int x, int y, int nLines, hmap_uint16_str* mapAsm, cpu6502* cpu) {
 
 void DrawColorPalette(int x, int y) {
 
-    const int nSwatchSize = 6;
+    const int nSwatchSize = 10;
 
     for (int p = 0; p < 8; p++) { // For each palette
         for (int s = 0; s < 4; s++) { // For each index

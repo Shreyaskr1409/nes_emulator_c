@@ -1,6 +1,7 @@
 #include "ppu.h"
 #include "raylib.h"
 #include <stdint.h>
+#include <stdio.h>
 
 void PpuInit(ppu2C02 *ppu) {
     ppu->cycle = 0;
@@ -295,6 +296,7 @@ uint8_t PpuReadFromPpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
         // The first index is to determine if the data is in 1st 4kB or 2nd 4kB
         // since the 1FFF is the max value, the index will only be 0 or 1
         data = ppu->tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF];
+        printf("Running");
 
     } else if (addr >= 0x2000 && addr <= 0x3EFF) {
         // NAMETABLE MEMORY
@@ -360,7 +362,7 @@ void PpuClock(ppu2C02* ppu) {
 
     int x = ppu->cycle - 1;
     int y = ppu->scanline;
-    
+
     if (x >= 0 && x < 256 && y >= 0 && y < 240) {
         // Write to buffer instead of drawing
         int idx = (y * 256 + x) * 4;
