@@ -46,9 +46,9 @@ uint8_t AND(cpu6502 *cpu) {
 
 uint8_t ASL(cpu6502 *cpu) {
     CpuFetchFromBus(cpu);
-    cpu->temp = cpu->fetched<<1;
+    cpu->temp = (uint16_t)cpu->fetched<<1;
     CpuSetFlag(cpu, C, (cpu->temp & 0xFF00) > 0);
-    CpuSetFlag(cpu, N, cpu->temp == 0x80);
+    CpuSetFlag(cpu, N, cpu->temp & 0x80);
     CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0x00);
 
     if (cpu->lookup[cpu->opcode].addrmode == IMP) {
@@ -111,8 +111,8 @@ uint8_t BIT(cpu6502 *cpu) {
     CpuFetchFromBus(cpu);
     cpu->temp = cpu->a & cpu->fetched;
     CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0x0000);
-    CpuSetFlag(cpu, V, cpu->temp & (1<<6));
-    CpuSetFlag(cpu, N, cpu->temp & (1<<7));
+    CpuSetFlag(cpu, V, cpu->fetched & (1<<6));
+    CpuSetFlag(cpu, N, cpu->fetched & (1<<7));
     return 0;
 }
 
@@ -159,6 +159,7 @@ uint8_t BPL(cpu6502 *cpu) {
 }
 
 uint8_t BRK(cpu6502 *cpu) {
+    cpu->pc++;
     // Set interrupt as ON before doing anything
     CpuSetFlag(cpu, I, true);
     CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, (cpu->pc >> 8) & 0x00FF);
@@ -170,7 +171,7 @@ uint8_t BRK(cpu6502 *cpu) {
     // to the location in the memory, it knows the flags which were
     // present at the time when BRK was executed
     CpuSetFlag(cpu, B, true);
-    CpuWriteToCpuBus(cpu, cpu->stkp, cpu->status);
+    CpuWriteToCpuBus(cpu, 0x0100 + cpu->stkp, cpu->status);
     cpu->stkp--;
     CpuSetFlag(cpu, B, false);
 
@@ -218,7 +219,7 @@ uint8_t CLI(cpu6502 *cpu) {
     return 0;
 }
 uint8_t CLV(cpu6502 *cpu) {
-    CpuSetFlag(cpu, I, false);
+    CpuSetFlag(cpu, V, false);
     return 0;
 }
 
@@ -376,7 +377,7 @@ uint8_t NOP(cpu6502 *cpu) {
 
 uint8_t ORA(cpu6502 *cpu) {
     CpuFetchFromBus(cpu);
-    cpu->a = cpu->addr_abs | cpu->fetched;
+    cpu->a = cpu->a | cpu->fetched;
     CpuSetFlag(cpu, Z, cpu->a == 0x00);
     CpuSetFlag(cpu, N, cpu->a & 0x80);
     return 1;
@@ -433,7 +434,7 @@ uint8_t ROL(cpu6502 *cpu) {
 uint8_t ROR(cpu6502 *cpu) {
     CpuFetchFromBus(cpu);
     cpu->temp = (uint16_t)(cpu->fetched >> 1) | (CpuGetFlag(cpu, C) << 7);
-    CpuSetFlag(cpu, C, cpu->temp & 0x0001);
+    CpuSetFlag(cpu, C, cpu->fetched & 0x0001);
     CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0x0000);
     CpuSetFlag(cpu, N, cpu->temp & (1<<7));
     if (cpu->lookup[cpu->opcode].addrmode == IMP) {
@@ -478,7 +479,7 @@ uint8_t SBC(cpu6502 *cpu) {
     CpuSetFlag(cpu, C, cpu->temp & 0xFF00);
     CpuSetFlag(cpu, Z, (cpu->temp & 0x00FF) == 0);
     CpuSetFlag(cpu, N, (cpu->temp & 0x80));
-    CpuSetFlag(cpu, V, (((uint16_t)cpu->a ^ value)
+    CpuSetFlag(cpu, V, (((uint16_t)cpu->temp ^ value)
                 & ((uint16_t)cpu->a ^ (uint16_t)cpu->temp)) & 0x0080);
     cpu->a = cpu->temp & 0x00FF;
     return 1;

@@ -244,7 +244,7 @@ uint8_t PpuReadFromCpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
             if (ppu->addr >= 0x3F00) {
                 data = ppu->data_buffer;
             }
-            ppu->addr++;
+            ppu->addr += (ppu->control.increment_mode ? 32 : 1);
             break;
     }
 
@@ -279,7 +279,7 @@ void PpuWriteToCpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
             break;
         case 0x0007: // PPU Data
             PpuWriteToPpuBus(ppu, ppu->addr, data);
-            ppu->addr++;
+            ppu->addr += (ppu->control.increment_mode ? 32 : 1);
             break;
     }
 }
@@ -408,7 +408,7 @@ void PpuClock(ppu2C02* ppu) {
 
     if (ppu->scanline == 241 && ppu->cycle == 1) {
         ppu->status.bits.vertical_blank = 1;
-        if (ppu->control.bits.enable_nmi) {
+        if (ppu->control.enable_nmi) {
             ppu->nmi = true;
         }
     }
@@ -416,14 +416,14 @@ void PpuClock(ppu2C02* ppu) {
     int x = ppu->cycle - 1;
     int y = ppu->scanline;
 
-    if (x >= 0 && x < 256 && y >= 0 && y < 240) {
-        // Write to buffer instead of drawing
-        int idx = (y * 256 + x) * 4;
-        ppu->frameBuffer[idx] = GetRandomValue(0, 1) ? 0xFF : 0x30; // R
-        ppu->frameBuffer[idx+1] = ppu->frameBuffer[idx]; // G
-        ppu->frameBuffer[idx+2] = ppu->frameBuffer[idx]; // B
-        ppu->frameBuffer[idx+3] = 0xFF; // A
-    }
+    // if (x >= 0 && x < 256 && y >= 0 && y < 240) {
+    //     // Write to buffer instead of drawing
+    //     int idx = (y * 256 + x) * 4;
+    //     ppu->frameBuffer[idx] = GetRandomValue(0, 1) ? 0xFF : 0x30; // R
+    //     ppu->frameBuffer[idx+1] = ppu->frameBuffer[idx]; // G
+    //     ppu->frameBuffer[idx+2] = ppu->frameBuffer[idx]; // B
+    //     ppu->frameBuffer[idx+3] = 0xFF; // A
+    // }
 
     // Timing logic (unchanged)
     ppu->cycle++;

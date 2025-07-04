@@ -1,7 +1,6 @@
 #include <raylib.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include "../bus/bus.h"
 #include "../cartridge/cartridge.h"
@@ -23,6 +22,9 @@ void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns);
 void DrawCode(int x, int y, int nLines, hmap_uint16_str* mapAsm, cpu6502* cpu);
 void DrawColorPalette(int x, int y);
 void DrawPatternTable(int x, int y);
+void DrawNameTable();
+void DrawPatternTile(int x, int y, uint8_t id, uint8_t paletteIndex, Texture2D patternTable);
+
 int LoadROM();
 
 int main() {
@@ -52,23 +54,7 @@ int main() {
         DrawCode(debugPanelX, 140, 10, &mapAsm, &cpu);
         DrawColorPalette(debugPanelX, 445);
         DrawPatternTable(debugPanelX, 460);
-
-        // Texture2D patternTable = PpuGetPatternTable(&ppu, 0, nSelectedPalette);
-        //
-        // for (uint8_t y = 0; y < 30; y++) {
-        //     for (uint8_t x = 0; x < 32; x++) {
-        //
-        //         // char s_val[4];
-        //         // sprintf(s_val, "%02X", bus.ppu->tblName[0][y * 32 + x]);
-        //         // DrawText(s_val, x*24, y*24, 18, WHITE);
-        //
-        //         DrawTextureEx(
-        //                 PpuGetPatternTable(&ppu, 0, nSelectedPalette),
-        //                 (Vector2) {
-        //                 x*1, y*1
-        //                 }, 0.0, 3.0, WHITE);
-        //     }
-        // }
+        DrawNameTable();
 
         EndDrawing();
     }
@@ -81,8 +67,9 @@ int main() {
 
 int LoadROM() {
     // const char* file_path = "./test/nestest.nes";
-    const char* file_path = "./test/game_roms/smb.nes";
+    // const char* file_path = "./test/game_roms/smb.nes";
     // const char* file_path = "./test/game_roms/kung_fu.nes";
+    const char* file_path = "./test/game_roms/donkey_kong.nes";
     printf("Attempting to load: %s\n", file_path);
     FILE* test_file = fopen(file_path, "rb");
     if (test_file) {
@@ -304,4 +291,32 @@ void DrawPatternTable(int x, int y) {
     // Draw second pattern table (right)
     Texture2D patternTable1 = PpuGetPatternTable(&ppu, 1, nSelectedPalette);
     DrawTextureEx(patternTable1, (Vector2){x+260, y}, 0.0f, 2.0f, WHITE);
+}
+
+void DrawPatternTile(int x, int y, uint8_t id, uint8_t paletteIndex, Texture2D patternTable) {
+    int tileX = (id & 0x0F) << 3; // Lower 4 bits × 8
+    int tileY = ((id >> 4) & 0x0F) << 3; // Upper 4 bits × 8
+
+    Rectangle src = { tileX, tileY, 8, 8 };          // Source region from pattern texture
+    Rectangle dest = { x, y, 24, 24 };               // Destination size scaled up 3×
+    Vector2 origin = { 0, 0 };                       // No origin offset
+
+    DrawTexturePro(patternTable, src, dest, origin, 0.0f, WHITE);
+}
+
+void DrawNameTable() {
+    Texture2D patternTable = PpuGetPatternTable(&ppu, 1, nSelectedPalette);
+    for (uint8_t y = 0; y < 30; y++) {
+        for (uint8_t x = 0; x < 32; x++) {
+            // Get tile ID from nametable
+            uint8_t id = ppu.tblName[0][y * 32 + x];
+
+            // Compute screen position
+            int screenX = x * 24;
+            int screenY = y * 24;
+
+            // Draw tile
+            DrawPatternTile(screenX, screenY, id, nSelectedPalette, patternTable);
+        }
+    }
 }
