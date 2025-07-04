@@ -53,6 +53,23 @@ int main() {
         DrawColorPalette(debugPanelX, 445);
         DrawPatternTable(debugPanelX, 460);
 
+        // Texture2D patternTable = PpuGetPatternTable(&ppu, 0, nSelectedPalette);
+        //
+        // for (uint8_t y = 0; y < 30; y++) {
+        //     for (uint8_t x = 0; x < 32; x++) {
+        //
+        //         // char s_val[4];
+        //         // sprintf(s_val, "%02X", bus.ppu->tblName[0][y * 32 + x]);
+        //         // DrawText(s_val, x*24, y*24, 18, WHITE);
+        //
+        //         DrawTextureEx(
+        //                 PpuGetPatternTable(&ppu, 0, nSelectedPalette),
+        //                 (Vector2) {
+        //                 x*1, y*1
+        //                 }, 0.0, 3.0, WHITE);
+        //     }
+        // }
+
         EndDrawing();
     }
 

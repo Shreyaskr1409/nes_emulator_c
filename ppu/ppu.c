@@ -300,6 +300,31 @@ uint8_t PpuReadFromPpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
 
     } else if (addr >= 0x2000 && addr <= 0x3EFF) {
         // NAMETABLE MEMORY
+
+        if (ppu->cart->mirror == VERTICAL) {
+            
+            if (addr >= 0x0000 && addr <= 0x03FF)
+                data = ppu->tblName[0][addr & 0x03FF];
+            if (addr >= 0x0400 && addr <= 0x07FF)
+                data = ppu->tblName[1][addr & 0x03FF];
+            if (addr >= 0x0800 && addr <= 0x0BFF)
+                data = ppu->tblName[0][addr & 0x03FF];
+            if (addr >= 0x0C00 && addr <= 0x0FFF)
+                data = ppu->tblName[1][addr & 0x03FF];
+
+        } else if (ppu->cart->mirror == HORIZONTAL) {
+
+            if (addr >= 0x0000 && addr <= 0x03FF)
+                data = ppu->tblName[0][addr & 0x03FF];
+            if (addr >= 0x0400 && addr <= 0x07FF)
+                data = ppu->tblName[0][addr & 0x03FF];
+            if (addr >= 0x0800 && addr <= 0x0BFF)
+                data = ppu->tblName[1][addr & 0x03FF];
+            if (addr >= 0x0C00 && addr <= 0x0FFF)
+                data = ppu->tblName[1][addr & 0x03FF];
+
+        }
+
     } else if (addr >= 0x3F00 && addr <= 0x3FFF) {
         // PALETTE MEMORY
         
@@ -330,6 +355,34 @@ void PpuWriteToPpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
 
     } else if (addr >= 0x2000 && addr <= 0x3EFF) {
         // NAMETABLE MEMORY
+
+        addr &= 0x0FFF;
+
+        if (ppu->cart->mirror == VERTICAL) {
+            
+            if (addr >= 0x0000 && addr <= 0x03FF)
+                ppu->tblName[0][addr & 0x03FF] = data;
+            if (addr >= 0x0400 && addr <= 0x07FF)
+                ppu->tblName[1][addr & 0x03FF] = data;
+            if (addr >= 0x0800 && addr <= 0x0BFF)
+                ppu->tblName[0][addr & 0x03FF] = data;
+            if (addr >= 0x0C00 && addr <= 0x0FFF)
+                ppu->tblName[1][addr & 0x03FF] = data;
+
+        } else if (ppu->cart->mirror == HORIZONTAL) {
+
+            if (addr >= 0x0000 && addr <= 0x03FF)
+                ppu->tblName[0][addr & 0x03FF] = data;
+            if (addr >= 0x0400 && addr <= 0x07FF)
+                ppu->tblName[0][addr & 0x03FF] = data;
+            if (addr >= 0x0800 && addr <= 0x0BFF)
+                ppu->tblName[1][addr & 0x03FF] = data;
+            if (addr >= 0x0C00 && addr <= 0x0FFF)
+                ppu->tblName[1][addr & 0x03FF] = data;
+        }
+
+        printf("%02X - ", data);
+        printf("%02X %02X\n", ppu->tblName[0][addr & 0x03FF], ppu->tblName[1][addr & 0x03FF]);
     } else if (addr >= 0x3F00 && addr <= 0x3FFF) {
         // PALETTE MEMORY
         

@@ -34,6 +34,8 @@ bool CartInit(cartridge *cart, const char* sFileName) {
     cart->nMapperId = ((cart->header.mapper2 >> 4) << 4) | (cart->header.mapper1 >> 4);
     printf("The mapper ID is: %d\n", cart->nMapperId);
 
+    cart->mirror = (cart->header.mapper1 & 0x01) ? VERTICAL : HORIZONTAL;
+
     uint8_t nFileType = 1;
     
     if (nFileType == 0) {

@@ -6,7 +6,6 @@
 #include "mapper.h"
 #include "mapper000.h"
 
-
 typedef struct cartridge {
     // This shoudl cover most of the mappers
     uint8_t vPRGMem[32*16*1024];
@@ -29,8 +28,14 @@ typedef struct cartridge {
     } header;
 
     bool bImageValid;
-
     Mapper pMapper;
+
+    enum MIRROR {
+        HORIZONTAL,
+        VERTICAL,
+        ONESCREEN_LO,
+        ONESCREEN_HO,
+    } mirror;
 } cartridge;
 
 bool CartInit(cartridge *cart, const char* sFileName);
