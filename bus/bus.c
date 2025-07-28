@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <string.h>
 
-// simply a clock function
 uint32_t nSysClkCounter = 0;
 
 void BusInit(Bus *bus, cpu6502 *cpu, ppu2C02 *ppu) {

@@ -44,7 +44,7 @@ typedef struct ppu2C02 {
 			uint8_t sprite_overflow : 1;
 			uint8_t sprite_zero_hit : 1;
 			uint8_t vertical_blank : 1;
-		} bits;
+		};
 		uint8_t reg;
 	} status;
 
@@ -58,7 +58,7 @@ typedef struct ppu2C02 {
 			uint8_t enhance_red : 1;
 			uint8_t enhance_green : 1;
 			uint8_t enhance_blue : 1;
-		} bits;
+		};
 		uint8_t reg;
 	} mask;
 
@@ -76,6 +76,10 @@ typedef struct ppu2C02 {
 		uint8_t reg;
 	} control;
 
+    uint8_t address_latch; // tells whether we are reading from low bit or high bit
+    uint8_t data_buffer; // when reading from ppu, it is delayed by 1 cycle,
+                         // thus we are storing the data from a cycle before
+
 	union loopy_register {
 		struct {
 			uint16_t coarse_x : 5;
@@ -84,15 +88,20 @@ typedef struct ppu2C02 {
 			uint16_t nametable_y : 1;
 			uint16_t fine_y : 3;
 			uint16_t unused : 1;
-		} bits;
+		};
 		uint16_t reg;
-	} vram_addr;
+	} loopy;
 
-    uint8_t address_latch; // tells whether we are reading from low bit or high bit
-    uint8_t data_buffer; // when reading from ppu, it is delayed by 1 cycle,
-                         // thus we are storing the data from a cycle before
-    uint16_t addr; // stores compiled address
+    union loopy_register vram_addr;
+    union loopy_register tram_addr;
+    uint8_t fine_x;
+
     bool nmi;
+
+    uint8_t bg_next_tile_id;
+    uint8_t bg_next_tile_attrib;
+    uint8_t bg_next_tile_lsb;
+    uint8_t bg_next_tile_msb;
 
 } ppu2C02;
 

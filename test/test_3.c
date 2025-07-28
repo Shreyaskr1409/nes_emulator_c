@@ -67,9 +67,9 @@ int main() {
 
 int LoadROM() {
     // const char* file_path = "./test/nestest.nes";
-    // const char* file_path = "./test/game_roms/smb.nes";
+    const char* file_path = "./test/game_roms/smb.nes";
     // const char* file_path = "./test/game_roms/kung_fu.nes";
-    const char* file_path = "./test/game_roms/donkey_kong.nes";
+    // const char* file_path = "./test/game_roms/donkey_kong.nes";
     printf("Attempting to load: %s\n", file_path);
     FILE* test_file = fopen(file_path, "rb");
     if (test_file) {

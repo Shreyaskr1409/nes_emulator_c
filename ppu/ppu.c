@@ -1,7 +1,6 @@
 #include "ppu.h"
 #include "raylib.h"
 #include <stdint.h>
-#include <stdio.h>
 
 void PpuInit(ppu2C02 *ppu) {
     ppu->cycle = 0;
@@ -226,7 +225,7 @@ uint8_t PpuReadFromCpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
             data = (ppu->status.reg & 0xE0) | (ppu->data_buffer & 0x1F); // by design,
                      // in original NES, only the first 3 bits of status register are of interest
                      // rest is filled with noise
-            ppu->status.bits.vertical_blank = 0;
+            ppu->status.vertical_blank = 0;
             ppu->address_latch = 0;
             break;
         case 0x0003: // OAM Address
@@ -239,12 +238,12 @@ uint8_t PpuReadFromCpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
             break;
         case 0x0007: // PPU Data
             data = ppu->data_buffer;
-            ppu->data_buffer = PpuReadFromPpuBus(ppu, ppu->addr, true);
+            ppu->data_buffer = PpuReadFromPpuBus(ppu, ppu->vram_addr.reg, true);
 
-            if (ppu->addr >= 0x3F00) {
+            if (ppu->vram_addr.reg >= 0x3F00) {
                 data = ppu->data_buffer;
             }
-            ppu->addr += (ppu->control.increment_mode ? 32 : 1);
+            ppu->vram_addr.reg += (ppu->control.increment_mode ? 32 : 1);
             break;
     }
 
@@ -256,6 +255,8 @@ void PpuWriteToCpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
     {
         case 0x0000: // Control
             ppu->control.reg = data;
+            ppu->tram_addr.nametable_x = ppu->control.nametable_x;
+            ppu->tram_addr.nametable_y = ppu->control.nametable_y;
             break;
         case 0x0001: // Mask
             ppu->mask.reg = data;
@@ -267,19 +268,29 @@ void PpuWriteToCpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
         case 0x0004: // OAM Data
             break;
         case 0x0005: // Scroll
+            if (ppu->address_latch == 0) {
+                ppu->fine_x = data & 0x07;
+                ppu->tram_addr.coarse_x = data >> 3;
+                ppu->address_latch = 1;
+            } else {
+                ppu->tram_addr.fine_y = data & 0x07;
+                ppu->tram_addr.coarse_y = data >> 3;
+                ppu->address_latch = 0;
+            }
             break;
         case 0x0006: // PPU Address
             if (ppu->address_latch == 0) {
-                ppu->addr = (ppu->addr & 0x00FF) | (data << 8); // clear upper bits and assign it
+                ppu->tram_addr.reg = (ppu->tram_addr.reg & 0x00FF) | (data << 8); // clear upper bits and assign it
                 ppu->address_latch = 1;
             } else {
-                ppu->addr = (ppu->addr & 0xFF00) | data; // clear lower bits and assign it
+                ppu->tram_addr.reg = (ppu->tram_addr.reg & 0xFF00) | data; // clear lower bits and assign it
+                ppu->vram_addr = ppu->tram_addr;
                 ppu->address_latch = 0;
             }
             break;
         case 0x0007: // PPU Data
-            PpuWriteToPpuBus(ppu, ppu->addr, data);
-            ppu->addr += (ppu->control.increment_mode ? 32 : 1);
+            PpuWriteToPpuBus(ppu, ppu->vram_addr.reg, data);
+            ppu->vram_addr.reg += (ppu->control.increment_mode ? 32 : 1);
             break;
     }
 }
@@ -296,7 +307,6 @@ uint8_t PpuReadFromPpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
         // The first index is to determine if the data is in 1st 4kB or 2nd 4kB
         // since the 1FFF is the max value, the index will only be 0 or 1
         data = ppu->tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF];
-        printf("Running");
 
     } else if (addr >= 0x2000 && addr <= 0x3EFF) {
         // NAMETABLE MEMORY
@@ -381,8 +391,6 @@ void PpuWriteToPpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
                 ppu->tblName[1][addr & 0x03FF] = data;
         }
 
-        printf("%02X - ", data);
-        printf("%02X %02X\n", ppu->tblName[0][addr & 0x03FF], ppu->tblName[1][addr & 0x03FF]);
     } else if (addr >= 0x3F00 && addr <= 0x3FFF) {
         // PALETTE MEMORY
         
@@ -402,12 +410,30 @@ void PpuConnectCartridge(ppu2C02 *ppu, cartridge *cart) {
 }
 
 void PpuClock(ppu2C02* ppu) {
-    if (ppu->scanline == -1 && ppu->cycle == 1) {
-        ppu->status.bits.vertical_blank = 0;
+    if (ppu->scanline >= -1 && ppu->scanline <= 240) {
+        if (ppu->scanline == -1 && ppu->cycle == 1) {
+            ppu->status.vertical_blank = 0;
+        }
+
+        // ===================================TODO===================================
+        // if ((ppu->cycle >= 2 && ppu->cycle <= 258) || (ppu->cycle >= 321 && ppu->cycle < 338)) {
+        //     switch ((ppu->cycle-1) % 8) {
+        //         case 0:
+        //         case 2:
+        //         case 4:
+        //         case 6:
+        //         case 7:
+        //         default:
+        //     }
+        // }
+        //
+        // if (ppu->cycle == 256) {
+        //
+        // }
     }
 
     if (ppu->scanline == 241 && ppu->cycle == 1) {
-        ppu->status.bits.vertical_blank = 1;
+        ppu->status.vertical_blank = 1;
         if (ppu->control.enable_nmi) {
             ppu->nmi = true;
         }
