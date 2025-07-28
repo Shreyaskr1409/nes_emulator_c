@@ -3,6 +3,17 @@ This is a Nintendo Entertainment System emulator written in C which uses raylib 
 NES commonly refers to the Nintendo Entertainment System, a classic 8-bit home video game console developed by Nintendo released in 1983.
 The emulation works from NES electronic components built from scratch such as cpu, ppu, bus, mappers, so on.
 
+https://github.com/user-attachments/assets/2858c9c7-7102-40e3-82a9-079bc7f01950
+
+### Images
+> Donkey Kong
+> <img width="1420" height="815" alt="image" src="https://github.com/user-attachments/assets/44291a52-d375-4c33-95b9-97f09623bcac" />
+> Kung Fu
+> <img width="1384" height="811" alt="image" src="https://github.com/user-attachments/assets/89a2b5bf-0be9-4edf-a963-cbfb7af151b0" />
+> Super Mario Bros
+> <img width="1386" height="817" alt="image" src="https://github.com/user-attachments/assets/578c85e5-1aa4-4797-853c-5291fd578dc5" />
+
+
 ## Development
 To develop on this repository, you first need to create your own fork on GitHub.
 Apart from this, you must have `make` installed. You can find it on your respective **package manager** or even pre-installed on **Linux** `scoop` on **Windows** and `homebrew` on **Mac**.
