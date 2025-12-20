@@ -67,9 +67,10 @@ int main() {
 
 int LoadROM() {
     // const char* file_path = "./test/nestest.nes";
-    const char* file_path = "./test/game_roms/smb.nes";
+    // const char* file_path = "./test/game_roms/smb.nes";
     // const char* file_path = "./test/game_roms/kung_fu.nes";
-    // const char* file_path = "./test/game_roms/donkey_kong.nes";
+    const char* file_path = "./test/game_roms/donkey_kong.nes";
+
     printf("Attempting to load: %s\n", file_path);
     FILE* test_file = fopen(file_path, "rb");
     if (test_file) {
@@ -80,11 +81,13 @@ int LoadROM() {
         perror("File error");
         return 1;
     }
+
     if (!CartInit(&cart, file_path)) {
         printf("ERROR: CartInit failed!\n");
         return 1;
     }
     printf("Cartridge loaded successfully\n");
+
     if (cart.pMapper.cpuMapRead == NULL) {
         printf("ERROR: Mapper cpuMapRead is NULL!\n");
         return 1;
@@ -93,6 +96,7 @@ int LoadROM() {
         printf("ERROR: Mapper cpuMapWrite is NULL!\n");
         return 1;
     }
+
     BusInit(&bus, &cpu, &ppu);
     BusInsertCartridge(&bus, &cart);
 
@@ -151,10 +155,10 @@ void DrawCpu(int x, int y) {
     const int fontSize = 15;     // Slightly larger than 10*scale/2 for better readability
     const int lineHeight = 20;   // Increased line spacing for scaled display
     const int flagSpacing = 20;  // Spacing between status flags
-    
+
     // STATUS header and flags
     DrawText("STATUS:", x, y, fontSize, WHITE);
-    
+
     // Draw each flag with consistent spacing
     int flagX = x + 80;
     DrawText("N", flagX, y, fontSize, (bus.cpu->status & N) ? GREEN : RED);
@@ -165,21 +169,21 @@ void DrawCpu(int x, int y) {
     DrawText("I", flagX + flagSpacing*5, y, fontSize, (bus.cpu->status & I) ? GREEN : RED);
     DrawText("Z", flagX + flagSpacing*6, y, fontSize, (bus.cpu->status & Z) ? GREEN : RED);
     DrawText("C", flagX + flagSpacing*7, y, fontSize, (bus.cpu->status & C) ? GREEN : RED);
-    
+
     // Registers with proper spacing
     int regY = y + lineHeight;
     snprintf(buffer, sizeof(buffer), "PC: $%04X", bus.cpu->pc);
     DrawText(buffer, x, regY, fontSize, WHITE);
-    
+
     snprintf(buffer, sizeof(buffer), "A: $%02X [%d]", bus.cpu->a, bus.cpu->a);
     DrawText(buffer, x, regY + lineHeight, fontSize, WHITE);
-    
+
     snprintf(buffer, sizeof(buffer), "X: $%02X [%d]", bus.cpu->x, bus.cpu->x);
     DrawText(buffer, x, regY + lineHeight*2, fontSize, WHITE);
-    
+
     snprintf(buffer, sizeof(buffer), "Y: $%02X [%d]", bus.cpu->y, bus.cpu->y);
     DrawText(buffer, x, regY + lineHeight*3, fontSize, WHITE);
-    
+
     snprintf(buffer, sizeof(buffer), "Stack P: $%04X", bus.cpu->stkp);
     DrawText(buffer, x, regY + lineHeight*4, fontSize, WHITE);
 }
@@ -190,20 +194,20 @@ void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns) {
     const int scale = 3;         // Match your window scale factor
     const int fontSize = 18;     // Slightly larger than 10*scale/2 for better readability
     const int lineHeight = 20;   // Increased line spacing for scaled display
-    
+
     for (int row = 0; row < nRows; row++) {
         snprintf(buffer, sizeof(buffer), "$%04X:", nAddr);
-        
+
         for (int col = 0; col < nColumns; col++) {
             uint8_t byte = CpuReadFromBus(&cpu, nAddr);
-            
+
             char byteStr[4];
             snprintf(byteStr, sizeof(byteStr), " %02X", byte);
             strcat(buffer, byteStr);
-            
+
             nAddr += 1;
         }
-        
+
         DrawText(buffer, nRamX, nRamY, fontSize, WHITE);
         nRamY += lineHeight;
     }
@@ -213,10 +217,10 @@ void DrawCode(int x, int y, int nLines, hmap_uint16_str* mapAsm, cpu6502* cpu) {
     const int fontSize = 15;
     const int lineHeight = 20;
     const uint16_t max_addr = 0xFFFF;
-    
+
     // Center PC line
     int centerY = y + (nLines >> 1) * lineHeight;
-    
+
     // Draw PC line (highlighted)
     hmap_uint16_str_iter pc_it = hmap_uint16_str_find(mapAsm, cpu->pc);
     if (pc_it.ref != NULL) {
@@ -227,7 +231,7 @@ void DrawCode(int x, int y, int nLines, hmap_uint16_str* mapAsm, cpu6502* cpu) {
     int linesDrawn = 1;
     uint16_t next_addr = cpu->pc + 1;
     int nextY = centerY + lineHeight;
-    
+
     while (linesDrawn < nLines && next_addr <= max_addr) {
         hmap_uint16_str_iter it = hmap_uint16_str_find(mapAsm, next_addr);
         if (it.ref != NULL) {
@@ -242,7 +246,7 @@ void DrawCode(int x, int y, int nLines, hmap_uint16_str* mapAsm, cpu6502* cpu) {
     uint16_t prev_addr = cpu->pc - 1;
     int prevY = centerY - lineHeight;
     linesDrawn = 1; // Reset counter
-    
+
     while (linesDrawn <= (nLines >> 1) && prev_addr <= max_addr) { // prev_addr will wrap around if < 0
         hmap_uint16_str_iter it = hmap_uint16_str_find(mapAsm, prev_addr);
         if (it.ref != NULL) {

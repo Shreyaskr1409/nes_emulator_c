@@ -1,6 +1,7 @@
 #include "ppu.h"
 #include "raylib.h"
 #include <stdint.h>
+#include <stdio.h>
 
 void PpuInit(ppu2C02 *ppu) {
     ppu->cycle = 0;
@@ -416,20 +417,52 @@ void PpuClock(ppu2C02* ppu) {
         }
 
         // ===================================TODO===================================
-        // if ((ppu->cycle >= 2 && ppu->cycle <= 258) || (ppu->cycle >= 321 && ppu->cycle < 338)) {
-        //     switch ((ppu->cycle-1) % 8) {
-        //         case 0:
-        //         case 2:
-        //         case 4:
-        //         case 6:
-        //         case 7:
-        //         default:
-        //     }
-        // }
-        //
-        // if (ppu->cycle == 256) {
-        //
-        // }
+        if ((ppu->cycle >= 2 && ppu->cycle <= 258) || (ppu->cycle >= 321 && ppu->cycle < 338)) {
+            switch ((ppu->cycle-1) % 8) {
+                case 0:
+                    ppu->bg_next_tile_id = PpuReadFromPpuBus(ppu,
+                            0x2000 | (ppu->vram_addr.reg & 0x0FFF),
+                            true);
+                    break;
+
+                case 2:
+                    ppu->bg_next_tile_attrib = PpuReadFromPpuBus(ppu,
+                            (0x23C0 | (ppu->vram_addr.nametable_y << 11)
+                             | (ppu->vram_addr.nametable_x <<10)
+                             | ((ppu->vram_addr.coarse_y >> 2) << 3)
+                             | (ppu->vram_addr.coarse_x >> 2)),
+                            true);
+                    if (ppu->vram_addr.coarse_y & 0x02) ppu->bg_next_tile_attrib >>= 4;
+                    if (ppu->vram_addr.coarse_x & 0x02) ppu->bg_next_tile_attrib >>= 2;
+                    ppu->bg_next_tile_attrib &= 0x03;
+                    break;
+
+                case 4:
+                    ppu->bg_next_tile_lsb = PpuReadFromPpuBus(ppu, 
+                            (ppu->control.pattern_background << 12) +
+                            ((uint16_t)ppu->bg_next_tile_id << 4) +
+                            (ppu->vram_addr.fine_y) +
+                            0
+                            , true);
+                    break;
+
+                case 6:
+                    ppu->bg_next_tile_lsb = PpuReadFromPpuBus(ppu, 
+                            (ppu->control.pattern_background << 12) +
+                            ((uint16_t)ppu->bg_next_tile_id << 4) +
+                            (ppu->vram_addr.fine_y) +
+                            8
+                            , true);
+                    break;
+
+                // case 7:
+                // default:
+            }
+        }
+
+        if (ppu->cycle == 256) {
+
+        }
     }
 
     if (ppu->scanline == 241 && ppu->cycle == 1) {

@@ -1,7 +1,6 @@
 #include "addressing_modes.h"
 #include "cpu.h"
 #include <stdint.h>
-#include <stdio.h>
 
 // IMPLIED
 // This means that there is no data provided explicitly in the instruction

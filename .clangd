@@ -1,0 +1,20 @@
+CompileFlags:
+  Add:
+    - "-I./include"
+    - "-I./include/c11"
+    - "-I./include/stc"
+    - "-I./include/stc/priv"
+    - "-I./include/stc/sys"
+
+    # If raylib is system installed, add this (optional)
+    - "-I/usr/include"
+    - "-I/usr/local/include"
+
+    # Force C11 mode (optional but recommended)
+    - "-std=c11"
+
+Diagnostics:
+  UnusedIncludes: Strict
+
+Index:
+  Background: Build

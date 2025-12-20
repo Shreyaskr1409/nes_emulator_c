@@ -6,7 +6,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 
 // this pattern of lookup table is taken from OneLoneCoder's NES emulator
 // 16x16 lookup table
