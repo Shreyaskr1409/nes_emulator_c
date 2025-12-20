@@ -98,10 +98,20 @@ typedef struct ppu2C02 {
 
     bool nmi;
 
+    // pattern stores pixel colors for tiles and attributes store the palette
+    // while there are 8 palettes, 4 are for background and 4 are for foreground
+    // when rendering, these are all read bit by bit 
+    // this is done by using a addr pointed by ppu *to preload values for the next tile*
     uint8_t bg_next_tile_id;
     uint8_t bg_next_tile_attrib;
     uint8_t bg_next_tile_lsb;
     uint8_t bg_next_tile_msb;
+
+    // while updating the nametable, these are shifted one at a time to obtain values
+    uint16_t bg_shifter_pattern_lo;
+    uint16_t bg_shifter_pattern_hi;
+    uint16_t bg_shifter_attrib_lo;
+    uint16_t bg_shifter_attrib_hi;
 
 } ppu2C02;
 
@@ -112,9 +122,9 @@ Texture2D PpuGetScreen(ppu2C02* ppu);
 Texture2D PpuGetNameTable(ppu2C02* ppu, uint8_t i);
 Texture2D PpuGetPatternTable(ppu2C02* ppu, uint8_t i, uint8_t palette);
 
-Color GetColorFromPaletteRam(ppu2C02* ppu, uint8_t palette, uint8_t pixel);
+Color PpuGetColorFromPaletteRam(ppu2C02* ppu, uint8_t palette, uint8_t pixel);
 
-void PpuDrawPixelScreen(ppu2C02* ppu, int x, int y, Color color);
+void PpuSetPixelScreen(ppu2C02* ppu, int x, int y, Color color);
 void PpuUpdateScreenTexture(ppu2C02* ppu);
 
 uint8_t PpuReadFromCpuBus(ppu2C02* ppu, uint16_t addr, bool bReadonly);

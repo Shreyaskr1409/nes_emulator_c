@@ -27,3 +27,7 @@ test-2:
 test-3:
 	$(CC) test/test_3.c $(CFILES) $(CFLAGS_ALT) $(LDFLAGS) -o $(TARGET)
 	./$(TARGET)
+
+test-4:
+	$(CC) test/test_4.c $(CFILES) $(CFLAGS_ALT) $(LDFLAGS) -o $(TARGET)
+	./$(TARGET)

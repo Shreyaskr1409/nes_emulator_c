@@ -146,7 +146,7 @@ Texture2D PpuGetPatternTable(ppu2C02* ppu, uint8_t i, uint8_t palette) {
                             nTileX*8 + (7-nPixelX), // because the LSB (of variable) of vars: tile_lsb and tile_msb
                                                     // represent the rightmost pixel in the row
                             nTileY*8 + nPixelY,
-                            GetColorFromPaletteRam(ppu, palette, pixel));
+                            PpuGetColorFromPaletteRam(ppu, palette, pixel));
                 }
             }
         }
@@ -161,19 +161,19 @@ Texture2D PpuGetPatternTable(ppu2C02* ppu, uint8_t i, uint8_t palette) {
     return *ppu->texPatternTable[i];
 }
 
-Color GetColorFromPaletteRam(ppu2C02* ppu, uint8_t palette, uint8_t pixel) {
+Color PpuGetColorFromPaletteRam(ppu2C02* ppu, uint8_t palette, uint8_t pixel) {
     return ppu->palScreen[PpuReadFromPpuBus(ppu, 0x3F00 + (palette<<2) + pixel, true)];
 }
 
-void PpuDrawPixelScreen(ppu2C02* ppu, int x, int y, Color color) {
-        DrawTextureEx(
-                *ppu->texScreen,
-                (Vector2){x, y},
-                0.0f,      // Rotation
-                3.0f,      // Scale
-                color      // Tint
-                );
-        // ImageDrawPixel(ppu->imgScreen, x, y, color);
+void PpuSetPixelScreen(ppu2C02* ppu, int x, int y, Color color) {
+    if (x < 0 || x >= 256 || y < 0 || y >= 240)
+        return;
+
+    int idx = (y * 256 + x) * 4;
+    ppu->frameBuffer[idx + 0] = color.r;
+    ppu->frameBuffer[idx + 1] = color.g;
+    ppu->frameBuffer[idx + 2] = color.b;
+    ppu->frameBuffer[idx + 3] = 0xFF;
 }
 
 void PpuUpdateScreenTexture(ppu2C02* ppu) {
@@ -311,6 +311,7 @@ uint8_t PpuReadFromPpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
 
     } else if (addr >= 0x2000 && addr <= 0x3EFF) {
         // NAMETABLE MEMORY
+        addr &= 0x0FFF;
 
         if (ppu->cart->mirror == VERTICAL) {
             
@@ -410,16 +411,86 @@ void PpuConnectCartridge(ppu2C02 *ppu, cartridge *cart) {
     ppu->cart = cart;
 }
 
+static void IncrementScrollX(ppu2C02* ppu) {
+    if (ppu->mask.render_background || ppu->mask.render_sprites) {
+        if (ppu->vram_addr.coarse_x == 31) {
+            ppu->vram_addr.coarse_x = 0;
+            ppu->vram_addr.nametable_x = ~ppu->vram_addr.nametable_x;
+        } else {
+            ppu->vram_addr.coarse_x++;
+        }
+    }
+}
+
+static void IncrementScrollY(ppu2C02* ppu) {
+    if (ppu->mask.render_background || ppu->mask.render_sprites) {
+        if (ppu->vram_addr.fine_y < 7) {
+            ppu->vram_addr.fine_y++;
+        } else {
+            ppu->vram_addr.fine_y = 0;
+
+            if (ppu->vram_addr.coarse_y == 29) {
+                ppu->vram_addr.coarse_y = 0;
+                ppu->vram_addr.nametable_y = ~ppu->vram_addr.nametable_y;
+            } else if (ppu->vram_addr.coarse_y == 31) {
+                ppu->vram_addr.coarse_y = 0;
+            } else {
+                ppu->vram_addr.coarse_y++;
+            }
+        }
+    }
+}
+
+static void TransferAddressX(ppu2C02* ppu) {
+    if (ppu->mask.render_background || ppu->mask.render_sprites) {
+        ppu->vram_addr.nametable_x = ppu->tram_addr.nametable_x;
+        ppu->vram_addr.coarse_x = ppu->tram_addr.coarse_x;
+    }
+}
+
+static void TransferAddressY(ppu2C02* ppu) {
+    if (ppu->mask.render_background || ppu->mask.render_sprites) {
+        ppu->vram_addr.fine_y = ppu->tram_addr.fine_y;
+        ppu->vram_addr.nametable_y = ppu->tram_addr.nametable_y;
+        ppu->vram_addr.coarse_y = ppu->tram_addr.coarse_y;
+    }
+}
+
+static void LoadBackgroundShifters(ppu2C02* ppu) {
+    // storing 8-bit data into the bottom of the shifters
+    ppu->bg_shifter_pattern_lo = (ppu->bg_shifter_pattern_lo & 0xFF00) | ppu->bg_next_tile_lsb;
+    ppu->bg_shifter_pattern_hi = (ppu->bg_shifter_pattern_hi & 0xFF00) | ppu->bg_next_tile_msb;
+    ppu->bg_shifter_attrib_lo = (ppu->bg_shifter_attrib_lo & 0xFF00) | ((ppu->bg_next_tile_attrib & 0b01) ? 0xFF : 0x00);
+    ppu->bg_shifter_attrib_hi = (ppu->bg_shifter_attrib_hi & 0xFF00) | ((ppu->bg_next_tile_attrib & 0b10) ? 0xFF : 0x00);
+}
+
+static void UpdateShifters(ppu2C02* ppu) {
+    if (ppu->mask.render_background) {
+        ppu->bg_shifter_pattern_lo <<= 1;
+        ppu->bg_shifter_pattern_hi <<= 1;
+        ppu->bg_shifter_attrib_lo <<= 1;
+        ppu->bg_shifter_attrib_hi <<= 1;
+    }
+}
+
 void PpuClock(ppu2C02* ppu) {
     if (ppu->scanline >= -1 && ppu->scanline <= 240) {
+        if (ppu->scanline == 0 && ppu->cycle == 0) {
+            ppu->cycle = 1;
+        }
+
         if (ppu->scanline == -1 && ppu->cycle == 1) {
             ppu->status.vertical_blank = 0;
         }
 
         // ===================================TODO===================================
         if ((ppu->cycle >= 2 && ppu->cycle <= 258) || (ppu->cycle >= 321 && ppu->cycle < 338)) {
+            // we want to update shifters at every visible cycle
+            UpdateShifters(ppu);
+
             switch ((ppu->cycle-1) % 8) {
                 case 0:
+                    LoadBackgroundShifters(ppu);
                     ppu->bg_next_tile_id = PpuReadFromPpuBus(ppu,
                             0x2000 | (ppu->vram_addr.reg & 0x0FFF),
                             true);
@@ -428,7 +499,7 @@ void PpuClock(ppu2C02* ppu) {
                 case 2:
                     ppu->bg_next_tile_attrib = PpuReadFromPpuBus(ppu,
                             (0x23C0 | (ppu->vram_addr.nametable_y << 11)
-                             | (ppu->vram_addr.nametable_x <<10)
+                             | (ppu->vram_addr.nametable_x << 10)
                              | ((ppu->vram_addr.coarse_y >> 2) << 3)
                              | (ppu->vram_addr.coarse_x >> 2)),
                             true);
@@ -447,7 +518,7 @@ void PpuClock(ppu2C02* ppu) {
                     break;
 
                 case 6:
-                    ppu->bg_next_tile_lsb = PpuReadFromPpuBus(ppu, 
+                    ppu->bg_next_tile_msb = PpuReadFromPpuBus(ppu, 
                             (ppu->control.pattern_background << 12) +
                             ((uint16_t)ppu->bg_next_tile_id << 4) +
                             (ppu->vram_addr.fine_y) +
@@ -455,34 +526,60 @@ void PpuClock(ppu2C02* ppu) {
                             , true);
                     break;
 
-                // case 7:
-                // default:
+                case 7:
+                    IncrementScrollX(ppu);
+                    break;
             }
         }
 
+        if (ppu->cycle == 338 || ppu->cycle == 340) {
+            ppu->bg_next_tile_id = PpuReadFromPpuBus(ppu, (0x2000 | (ppu->vram_addr.reg & 0x0FFF)), true);
+        }
+
         if (ppu->cycle == 256) {
-
+            IncrementScrollY(ppu);
+        }
+        if (ppu->cycle == 257) {
+            LoadBackgroundShifters(ppu);
+            TransferAddressX(ppu);
+        }
+        if (ppu->scanline == -1 && ppu->cycle >= 280 && ppu->cycle < 305) {
+            TransferAddressY(ppu);
         }
     }
 
-    if (ppu->scanline == 241 && ppu->cycle == 1) {
-        ppu->status.vertical_blank = 1;
-        if (ppu->control.enable_nmi) {
-            ppu->nmi = true;
+    if (ppu->scanline == 240) {
+        // Nothing happens (IDLE)
+    }
+
+    if (ppu->scanline >= 241 && ppu->scanline < 261) {
+        if (ppu->scanline == 241 && ppu->cycle == 1) {
+            ppu->status.vertical_blank = 1;
+            if (ppu->control.enable_nmi) {
+                ppu->nmi = true;
+            }
         }
     }
 
-    int x = ppu->cycle - 1;
-    int y = ppu->scanline;
+    uint8_t bg_pixel = 0x00; // we will be only using 2 bits though
+    uint8_t bg_palette = 0x00;
 
-    // if (x >= 0 && x < 256 && y >= 0 && y < 240) {
-    //     // Write to buffer instead of drawing
-    //     int idx = (y * 256 + x) * 4;
-    //     ppu->frameBuffer[idx] = GetRandomValue(0, 1) ? 0xFF : 0x30; // R
-    //     ppu->frameBuffer[idx+1] = ppu->frameBuffer[idx]; // G
-    //     ppu->frameBuffer[idx+2] = ppu->frameBuffer[idx]; // B
-    //     ppu->frameBuffer[idx+3] = 0xFF; // A
-    // }
+    if (ppu->mask.render_background) {
+        // msb is taken and shifted as per fine_x
+        uint16_t bit_mux = 0x8000 >> ppu->fine_x;
+
+        // p0 and p1 are used to represent which color from the palette
+        uint8_t p0_pixel = (ppu->bg_shifter_pattern_lo & bit_mux) > 0;
+        uint8_t p1_pixel = (ppu->bg_shifter_pattern_hi & bit_mux) > 0;
+        bg_pixel = (p1_pixel << 1) | p0_pixel;
+
+        uint8_t bg_pal0 = (ppu->bg_shifter_attrib_lo & bit_mux) > 0;
+        uint8_t bg_pal1 = (ppu->bg_shifter_attrib_hi & bit_mux) > 0;
+        bg_palette = (bg_pal1 << 1) | bg_pal0;
+    }
+
+
+    PpuSetPixelScreen(ppu, ppu->cycle - 1, ppu->scanline, PpuGetColorFromPaletteRam(ppu, bg_palette, bg_pixel));
 
     // Timing logic (unchanged)
     ppu->cycle++;

@@ -48,7 +48,7 @@ int main() {
 
         ClearBackground(BLACK);
 
-        PpuDrawPixelScreen(&ppu, 0, 0, WHITE);
+        PpuSetPixelScreen(&ppu, 0, 0, WHITE);
 
         DrawCpu(debugPanelX, debugStartY);
         DrawCode(debugPanelX, 140, 10, &mapAsm, &cpu);
@@ -265,7 +265,7 @@ void DrawColorPalette(int x, int y) {
     for (int p = 0; p < 8; p++) { // For each palette
         for (int s = 0; s < 4; s++) { // For each index
             
-            Color col = GetColorFromPaletteRam(&ppu, p, s);
+            Color col = PpuGetColorFromPaletteRam(&ppu, p, s);
 
             DrawRectangle(
                 x + p * (nSwatchSize * 5) + s * nSwatchSize, 
