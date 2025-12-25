@@ -13,7 +13,7 @@ CFILES = cpu/addressing_modes.c cpu/instructions.c cpu/cpu.c \
 		 bus/bus.c
 
 default:
-	$(CC) main.c $(CFLAGS) $(LDFLAGS) -o $(TARGET)
+	$(CC) main.c $(CFILES) $(CFLAGS_ALT) $(LDFLAGS) -o $(TARGET)
 	./$(TARGET)
 
 test-1:

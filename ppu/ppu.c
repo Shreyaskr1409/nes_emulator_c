@@ -1,7 +1,6 @@
 #include "ppu.h"
 #include "raylib.h"
 #include <stdint.h>
-#include <stdio.h>
 
 void PpuInit(ppu2C02 *ppu) {
     ppu->cycle = 0;
@@ -173,7 +172,7 @@ void PpuSetPixelScreen(ppu2C02* ppu, int x, int y, Color color) {
     ppu->frameBuffer[idx + 0] = color.r;
     ppu->frameBuffer[idx + 1] = color.g;
     ppu->frameBuffer[idx + 2] = color.b;
-    ppu->frameBuffer[idx + 3] = 0xFF;
+    ppu->frameBuffer[idx + 3] = color.a;
 }
 
 void PpuUpdateScreenTexture(ppu2C02* ppu) {
@@ -301,7 +300,7 @@ uint8_t PpuReadFromPpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
     addr &= 0x3FFF;
 
     if (CartReadFromPpuBus(ppu->cart, addr, &data)) {
-        
+
     } else if (addr >= 0x0000 && addr <= 0x1FFF) {
         // PATTERN MEMORY
 
@@ -314,7 +313,7 @@ uint8_t PpuReadFromPpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
         addr &= 0x0FFF;
 
         if (ppu->cart->mirror == VERTICAL) {
-            
+
             if (addr >= 0x0000 && addr <= 0x03FF)
                 data = ppu->tblName[0][addr & 0x03FF];
             if (addr >= 0x0400 && addr <= 0x07FF)
@@ -339,7 +338,7 @@ uint8_t PpuReadFromPpuBus(ppu2C02 *ppu, uint16_t addr, bool bReadonly) {
 
     } else if (addr >= 0x3F00 && addr <= 0x3FFF) {
         // PALETTE MEMORY
-        
+
         addr &= 0x001F; // Index from palette memory can be obtained by masking it
                         // for the last 5 bits
         if (addr == 0x0010) addr = 0x0000;
@@ -357,7 +356,7 @@ void PpuWriteToPpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
     addr &= 0x3FFF;
 
     if (CartWriteToPpuBus(ppu->cart, addr, data)) {
-        
+
     } else if (addr >= 0x0000 && addr <= 0x1FFF) {
         // PATTERN MEMORY
 
@@ -371,7 +370,7 @@ void PpuWriteToPpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
         addr &= 0x0FFF;
 
         if (ppu->cart->mirror == VERTICAL) {
-            
+
             if (addr >= 0x0000 && addr <= 0x03FF)
                 ppu->tblName[0][addr & 0x03FF] = data;
             if (addr >= 0x0400 && addr <= 0x07FF)
@@ -395,7 +394,7 @@ void PpuWriteToPpuBus(ppu2C02 *ppu, uint16_t addr, uint8_t data) {
 
     } else if (addr >= 0x3F00 && addr <= 0x3FFF) {
         // PALETTE MEMORY
-        
+
         addr &= 0x001F; // Index from palette memory can be obtained by masking it
                         // for the last 5 bits
         if (addr == 0x0010) addr = 0x0000;
@@ -509,7 +508,7 @@ void PpuClock(ppu2C02* ppu) {
                     break;
 
                 case 4:
-                    ppu->bg_next_tile_lsb = PpuReadFromPpuBus(ppu, 
+                    ppu->bg_next_tile_lsb = PpuReadFromPpuBus(ppu,
                             (ppu->control.pattern_background << 12) +
                             ((uint16_t)ppu->bg_next_tile_id << 4) +
                             (ppu->vram_addr.fine_y) +
@@ -518,7 +517,7 @@ void PpuClock(ppu2C02* ppu) {
                     break;
 
                 case 6:
-                    ppu->bg_next_tile_msb = PpuReadFromPpuBus(ppu, 
+                    ppu->bg_next_tile_msb = PpuReadFromPpuBus(ppu,
                             (ppu->control.pattern_background << 12) +
                             ((uint16_t)ppu->bg_next_tile_id << 4) +
                             (ppu->vram_addr.fine_y) +
